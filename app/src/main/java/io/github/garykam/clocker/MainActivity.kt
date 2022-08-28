@@ -46,7 +46,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.weight(0.2F),
                         contentAlignment = Alignment.BottomCenter
                     ) {
-                        ClockerText(clockedIn = mainViewModel.clockedIn)
+                        ClockerText(mainViewModel.clockTime)
                     }
 
                     Box(
@@ -54,7 +54,8 @@ class MainActivity : ComponentActivity() {
                         contentAlignment = Alignment.TopCenter
                     ) {
                         ClockerButton(
-                            getString(R.string.clock_in_morning)
+                            mainViewModel.isClockedIn(),
+                            mainViewModel.clockTime
                         ) { mainViewModel.clockInOut() }
                     }
                 }
@@ -71,33 +72,32 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun ClockerText(clockedIn: Boolean) {
+    private fun ClockerText(clockTime: ClockTime) {
         Text(
-            text = if (clockedIn) {
-                getString(R.string.clocked_in)
-            } else {
-                getString(R.string.clocked_out)
-            },
+            text = clockTime.getText(this),
             modifier = Modifier
                 .padding(bottom = 10.dp)
-                .clickable(enabled = clockedIn) { mainViewModel.openAlarmDialog = true },
+                .clickable(enabled = true) { mainViewModel.openAlarmDialog = true },
             style = MaterialTheme.typography.h5
         )
     }
 
     @Composable
-    private fun ClockerButton(text: String, onClockChange: () -> Unit) {
+    private fun ClockerButton(clockedIn: Boolean, clockTime: ClockTime, onClockChange: () -> Unit) {
         var visible by remember { mutableStateOf(true) }
 
         AnimatedVisibility(visible = visible) {
             Button(
                 onClick = {
-                    visible = !visible
-                    scheduleAlarm()
+                    //visible = !visible
                     onClockChange()
+                    scheduleAlarm(clockTime)
                 }
             ) {
-                Text(text = text, fontSize = 20.sp)
+                Text(
+                    text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
+                    fontSize = 20.sp
+                )
             }
         }
     }
@@ -128,20 +128,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun scheduleAlarm() {
-        val calendar = Calendar.getInstance().also {
-            it.add(Calendar.HOUR, 9)
-        }
+    private fun scheduleAlarm(clockTime: ClockTime) {
+        if (clockTime == ClockTime.MORNING_OUT || clockTime == ClockTime.MORNING_IN) {
+            val calendar = Calendar.getInstance().also {
+                it.add(Calendar.HOUR, if (clockTime == ClockTime.MORNING_OUT) 9 else 1)
+            }
 
-        val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
-            putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY))
-            putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE))
-            putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
-            putExtra(AlarmClock.EXTRA_VIBRATE, true)
-            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
-        }
+            val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
+                putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY))
+                putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE))
+                putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
+                putExtra(AlarmClock.EXTRA_VIBRATE, true)
+                putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+            }
 
-        startActivity(intent)
+            startActivity(intent)
+        }
     }
 
     private fun dismissAlarm() {

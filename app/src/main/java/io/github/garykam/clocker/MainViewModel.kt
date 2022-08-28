@@ -1,18 +1,19 @@
 package io.github.garykam.clocker
 
-import android.os.Handler
-import android.os.Looper
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
 class MainViewModel : ViewModel() {
-    var clockedIn: Boolean by mutableStateOf(false)
-        private set
     var openAlarmDialog: Boolean by mutableStateOf(false)
+    var clockTime: ClockTime by mutableStateOf(ClockTime.MORNING_OUT)
+        private set
 
     fun clockInOut() {
-        Handler(Looper.getMainLooper()).postDelayed({ clockedIn = !clockedIn }, 500L)
+        clockTime = clockTime.getNext()
     }
+
+    fun isClockedIn(): Boolean =
+        clockTime == ClockTime.MORNING_IN || clockTime == ClockTime.LUNCH_IN
 }
