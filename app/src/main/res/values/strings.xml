@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Clocker</string>
+    <string name="clock_in">Clock-In</string>
+    <string name="clock_out">Clock-Out</string>
+    <string name="clocked_in">You are clocked in.</string>
+    <string name="clocked_out">You are clocked out.</string>
+</resources>
