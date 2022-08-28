@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 class MainViewModel : ViewModel() {
     var clockedIn: Boolean by mutableStateOf(false)
         private set
+    var openAlarmDialog: Boolean by mutableStateOf(false)
 
     fun clockInOut() {
         Handler(Looper.getMainLooper()).postDelayed({ clockedIn = !clockedIn }, 500L)

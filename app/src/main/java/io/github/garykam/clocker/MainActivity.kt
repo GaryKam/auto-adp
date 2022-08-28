@@ -7,13 +7,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +29,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppTheme {
+                DismissAlarmDialog()
+
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -42,7 +43,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     Box(
-                        modifier = Modifier.weight(1F),
+                        modifier = Modifier.weight(0.2F),
                         contentAlignment = Alignment.BottomCenter
                     ) {
                         ClockerText(clockedIn = mainViewModel.clockedIn)
@@ -77,7 +78,9 @@ class MainActivity : ComponentActivity() {
             } else {
                 getString(R.string.clocked_out)
             },
-            modifier = Modifier.padding(bottom = 10.dp),
+            modifier = Modifier
+                .padding(bottom = 10.dp)
+                .clickable(enabled = clockedIn) { mainViewModel.openAlarmDialog = true },
             style = MaterialTheme.typography.h5
         )
     }
@@ -99,17 +102,52 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Composable
+    private fun DismissAlarmDialog() {
+        if (mainViewModel.openAlarmDialog) {
+            AlertDialog(
+                onDismissRequest = { mainViewModel.openAlarmDialog = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        mainViewModel.openAlarmDialog = false
+                        dismissAlarm()
+                    }) {
+                        Text(text = getString(R.string.yes))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        mainViewModel.openAlarmDialog = false
+                    }) {
+                        Text(text = getString(R.string.no))
+                    }
+                },
+                title = { Text(text = getString(R.string.alarm_delete)) },
+                text = { Text(text = getString(R.string.alarm_delete_confirmation)) }
+            )
+        }
+    }
+
     private fun scheduleAlarm() {
         val calendar = Calendar.getInstance().also {
-            it.add(Calendar.HOUR, 1)
+            it.add(Calendar.HOUR, 9)
         }
 
         val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
             putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY))
             putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE))
-            putExtra(AlarmClock.EXTRA_MESSAGE, "Clock-Out")
+            putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
             putExtra(AlarmClock.EXTRA_VIBRATE, true)
             putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+        }
+
+        startActivity(intent)
+    }
+
+    private fun dismissAlarm() {
+        val intent = Intent(AlarmClock.ACTION_DISMISS_ALARM).apply {
+            putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_LABEL)
+            putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
         }
 
         startActivity(intent)

@@ -5,4 +5,8 @@
     <string name="clock_out">Clock-Out</string>
     <string name="clocked_in">You are clocked in.</string>
     <string name="clocked_out">You are clocked out.</string>
+    <string name="alarm_delete">Delete Alarm?</string>
+    <string name="alarm_delete_confirmation">Do you want to delete the Clocker alarm? You will be sent to the Android Clock app.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>
