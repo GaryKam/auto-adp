@@ -1,13 +1,16 @@
 package io.github.garykam.clocker
 
+import android.content.Intent
 import android.os.Bundle
+import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -15,7 +18,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.github.garykam.clocker.ui.theme.AppTheme
+import java.util.*
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
@@ -27,15 +32,29 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 Column(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ClockerTitle()
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        ClockerText(mainViewModel.clockedIn)
+                    Box(
+                        modifier = Modifier.weight(2F),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        ClockerTitle()
+                    }
+
+                    Box(
+                        modifier = Modifier.weight(1F),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        ClockerText(clockedIn = mainViewModel.clockedIn)
+                    }
+
+                    Box(
+                        modifier = Modifier.weight(1F),
+                        contentAlignment = Alignment.TopCenter
+                    ) {
                         ClockerButton(
-                            mainViewModel.clockedIn,
-                            onClockChange = { mainViewModel.clockInOut() })
+                            getString(R.string.clock_in_morning)
+                        ) { mainViewModel.clockInOut() }
                     }
                 }
             }
@@ -53,36 +72,46 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun ClockerText(clockedIn: Boolean) {
         Text(
-            text = if (clockedIn) getString(R.string.clocked_in) else getString(R.string.clocked_out),
+            text = if (clockedIn) {
+                getString(R.string.clocked_in)
+            } else {
+                getString(R.string.clocked_out)
+            },
             modifier = Modifier.padding(bottom = 10.dp),
-            style = MaterialTheme.typography.h6
+            style = MaterialTheme.typography.h5
         )
     }
 
     @Composable
-    private fun ClockerButton(clockedIn: Boolean, onClockChange: () -> Unit) {
-        var widthState by remember { mutableStateOf(100.dp) }
-        val width by animateDpAsState(
-            targetValue = widthState,
-            tween(durationMillis = ANIMATION_DURATION)
-        )
+    private fun ClockerButton(text: String, onClockChange: () -> Unit) {
+        var visible by remember { mutableStateOf(true) }
 
-        Button(
-            onClick = {
-                onClockChange()
-                widthState = 0.dp
-            },
-            modifier = Modifier.size(width, 40.dp)
-        ) {
-            if (clockedIn) {
-                Text(text = getString(R.string.clock_out), softWrap = false)
-            } else {
-                Text(text = getString(R.string.clock_in), softWrap = false)
+        AnimatedVisibility(visible = visible) {
+            Button(
+                onClick = {
+                    visible = !visible
+                    scheduleAlarm()
+                    onClockChange()
+                }
+            ) {
+                Text(text = text, fontSize = 20.sp)
             }
         }
     }
 
-    companion object {
-        const val ANIMATION_DURATION = 500
+    private fun scheduleAlarm() {
+        val calendar = Calendar.getInstance().also {
+            it.add(Calendar.HOUR, 1)
+        }
+
+        val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
+            putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY))
+            putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE))
+            putExtra(AlarmClock.EXTRA_MESSAGE, "Clock-Out")
+            putExtra(AlarmClock.EXTRA_VIBRATE, true)
+            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+        }
+
+        startActivity(intent)
     }
 }
