@@ -1,8 +1,10 @@
 package io.github.garykam.clocker
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.AlarmClock
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.garykam.clocker.ui.theme.AppTheme
+import org.json.JSONArray
 import java.util.*
 
 class MainActivity : ComponentActivity() {
@@ -29,7 +32,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppTheme {
-                DismissAlarmDialog()
+                //DismissAlarmDialog()
 
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -53,10 +56,29 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.weight(1F),
                         contentAlignment = Alignment.TopCenter
                     ) {
-                        ClockerButton(
-                            mainViewModel.isClockedIn(),
-                            mainViewModel.clockTime
-                        ) { mainViewModel.clockInOut() }
+                        ClockerButton(mainViewModel.isClockedIn()) {
+                            mainViewModel.clockInOut()
+
+                            val clockTime = mainViewModel.clockTime
+                            saveClockTime(clockTime)
+
+                            when (clockTime) {
+                                ClockTime.LUNCH_OUT -> {
+                                    /*scheduleAlarm(Calendar.getInstance().also {
+                                        it.add(Calendar.HOUR, 1)
+                                    })*/
+                                }
+                                ClockTime.LUNCH_IN -> {
+
+                                }
+                                ClockTime.EVENING_OUT -> {
+                                    readClockTime()
+                                }
+                                else -> {}
+                            }
+
+
+                        }
                     }
                 }
             }
@@ -83,7 +105,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun ClockerButton(clockedIn: Boolean, clockTime: ClockTime, onClockChange: () -> Unit) {
+    private fun ClockerButton(clockedIn: Boolean, onClockChange: () -> Unit) {
         var visible by remember { mutableStateOf(true) }
 
         AnimatedVisibility(visible = visible) {
@@ -91,7 +113,6 @@ class MainActivity : ComponentActivity() {
                 onClick = {
                     //visible = !visible
                     onClockChange()
-                    scheduleAlarm(clockTime)
                 }
             ) {
                 Text(
@@ -128,22 +149,42 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun scheduleAlarm(clockTime: ClockTime) {
-        if (clockTime == ClockTime.MORNING_OUT || clockTime == ClockTime.MORNING_IN) {
-            val calendar = Calendar.getInstance().also {
-                it.add(Calendar.HOUR, if (clockTime == ClockTime.MORNING_OUT) 9 else 1)
-            }
+    private fun saveClockTime(clockTime: ClockTime) {
+        Log.d(TAG, "saving clock time ${clockTime.name}")
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR)
+        val minute = calendar.get(Calendar.MINUTE)
+        val second = calendar.get(Calendar.SECOND)
 
-            val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
-                putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY))
-                putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE))
-                putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
-                putExtra(AlarmClock.EXTRA_VIBRATE, true)
-                putExtra(AlarmClock.EXTRA_SKIP_UI, true)
-            }
-
-            startActivity(intent)
+        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        if (clockTime == ClockTime.MORNING_OUT) {
+            editor.clear().apply()
         }
+        val clockTimePref = sharedPreferences.getString("clock_time", "[]")
+        val json = JSONArray(clockTimePref).apply {
+            put("${clockTime.name}:$hour:$minute:$second")
+        }
+        editor.putString("clock_time", json.toString())
+        editor.apply()
+    }
+
+    private fun readClockTime() {
+        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
+        val clockTime = sharedPreferences.getString("clock_time", "[]")!!
+        Log.d(TAG, clockTime)
+    }
+
+    private fun scheduleAlarm(calendar: Calendar) {
+        val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
+            putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY))
+            putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE))
+            putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
+            putExtra(AlarmClock.EXTRA_VIBRATE, true)
+            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+        }
+
+        startActivity(intent)
     }
 
     private fun dismissAlarm() {
@@ -153,5 +194,9 @@ class MainActivity : ComponentActivity() {
         }
 
         startActivity(intent)
+    }
+
+    companion object {
+        const val TAG = "MainActivity"
     }
 }
