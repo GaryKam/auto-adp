@@ -2,6 +2,7 @@ package io.github.garykam.clocker
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.AlarmClock
 import android.util.Log
@@ -21,14 +22,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.garykam.clocker.ui.theme.AppTheme
-import org.json.JSONArray
+import org.json.JSONObject
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
+    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        sharedPreferences =
+            applicationContext.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
 
         setContent {
             AppTheme {
@@ -49,7 +55,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.weight(0.2F),
                         contentAlignment = Alignment.BottomCenter
                     ) {
-                        ClockerText(mainViewModel.clockTime)
+                        ClockerText(mainViewModel.clockOption)
                     }
 
                     Box(
@@ -58,26 +64,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         ClockerButton(mainViewModel.isClockedIn()) {
                             mainViewModel.clockInOut()
-
-                            val clockTime = mainViewModel.clockTime
-                            saveClockTime(clockTime)
-
-                            when (clockTime) {
-                                ClockTime.LUNCH_OUT -> {
-                                    /*scheduleAlarm(Calendar.getInstance().also {
-                                        it.add(Calendar.HOUR, 1)
-                                    })*/
-                                }
-                                ClockTime.LUNCH_IN -> {
-
-                                }
-                                ClockTime.EVENING_OUT -> {
-                                    readClockTime()
-                                }
-                                else -> {}
-                            }
-
-
+                            handleClockSchedule(mainViewModel.clockOption)
                         }
                     }
                 }
@@ -94,9 +81,9 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun ClockerText(clockTime: ClockTime) {
+    private fun ClockerText(clockOption: ClockOption) {
         Text(
-            text = clockTime.getText(this),
+            text = clockOption.getText(this),
             modifier = Modifier
                 .padding(bottom = 10.dp)
                 .clickable(enabled = true) { mainViewModel.openAlarmDialog = true },
@@ -149,30 +136,59 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun saveClockTime(clockTime: ClockTime) {
-        Log.d(TAG, "saving clock time ${clockTime.name}")
-        val calendar = Calendar.getInstance()
-        val hour = calendar.get(Calendar.HOUR)
-        val minute = calendar.get(Calendar.MINUTE)
-        val second = calendar.get(Calendar.SECOND)
+    private fun handleClockSchedule(clockOption: ClockOption) {
+        saveClockSchedule(clockOption)
 
-        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
+        when (clockOption) {
+            ClockOption.LUNCH_OUT -> {
+                /*scheduleAlarm(Calendar.getInstance().also {
+                    it.add(Calendar.HOUR, 1)
+                })*/
+            }
+
+            ClockOption.LUNCH_IN -> {
+                val morningClockMillis = readClockTime(ClockOption.MORNING_IN)
+                val lunchClockMillis = readClockTime(ClockOption.LUNCH_IN)
+                val millis = lunchClockMillis - morningClockMillis
+
+                val hour = TimeUnit.MILLISECONDS.toHours(millis)
+                val minute = TimeUnit.MILLISECONDS.toMinutes(millis) -
+                        TimeUnit.HOURS.toMinutes(hour)
+                val second = TimeUnit.MILLISECONDS.toSeconds(millis) -
+                        TimeUnit.MINUTES.toSeconds(minute) -
+                        TimeUnit.HOURS.toSeconds(hour)
+
+                Log.d(TAG, "time:$hour $minute $second")
+            }
+
+            ClockOption.EVENING_OUT -> {
+
+            }
+
+            else -> {}
+        }
+    }
+
+    private fun saveClockSchedule(clockOption: ClockOption) {
+        Log.d(TAG, "saving clock time ${clockOption.name}")
         val editor = sharedPreferences.edit()
-        if (clockTime == ClockTime.MORNING_OUT) {
+        if (clockOption == ClockOption.MORNING_OUT) {
             editor.clear().apply()
+            return
         }
-        val clockTimePref = sharedPreferences.getString("clock_time", "[]")
-        val json = JSONArray(clockTimePref).apply {
-            put("${clockTime.name}:$hour:$minute:$second")
+        val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
+        val json = JSONObject(schedule).apply {
+            put(clockOption.name, Calendar.getInstance().timeInMillis)
         }
-        editor.putString("clock_time", json.toString())
+        editor.putString(KEY_SCHEDULE, json.toString())
         editor.apply()
     }
 
-    private fun readClockTime() {
-        val sharedPreferences = getPreferences(Context.MODE_PRIVATE)
-        val clockTime = sharedPreferences.getString("clock_time", "[]")!!
-        Log.d(TAG, clockTime)
+    private fun readClockTime(clockOption: ClockOption): Long {
+        val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
+        val json = JSONObject(schedule)
+
+        return json.getLong(clockOption.name)
     }
 
     private fun scheduleAlarm(calendar: Calendar) {
@@ -197,6 +213,8 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        const val TAG = "MainActivity"
+        private const val TAG = "MainActivity"
+        private const val SHARED_PREFERENCES = "io.github.garykam.clocker"
+        private const val KEY_SCHEDULE = "key_schedule"
     }
 }
