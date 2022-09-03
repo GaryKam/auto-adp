@@ -23,8 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.garykam.clocker.ui.theme.AppTheme
 import org.json.JSONObject
+import java.time.Duration
+import java.time.LocalTime
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
@@ -141,24 +142,22 @@ class MainActivity : ComponentActivity() {
 
         when (clockOption) {
             ClockOption.LUNCH_OUT -> {
-                /*scheduleAlarm(Calendar.getInstance().also {
-                    it.add(Calendar.HOUR, 1)
-                })*/
+                scheduleAlarm(Calendar.getInstance().apply {
+                    add(Calendar.HOUR, 1)
+                })
             }
 
             ClockOption.LUNCH_IN -> {
-                val morningClockMillis = readClockTime(ClockOption.MORNING_IN)
-                val lunchClockMillis = readClockTime(ClockOption.LUNCH_IN)
-                val millis = lunchClockMillis - morningClockMillis
+                val timeWorked = Duration.between(
+                    readClockTime(ClockOption.MORNING_IN), readClockTime(ClockOption.LUNCH_IN)
+                )
+                val timeRemaining = LocalTime.of(9, 0).minus(timeWorked)
 
-                val hour = TimeUnit.MILLISECONDS.toHours(millis)
-                val minute = TimeUnit.MILLISECONDS.toMinutes(millis) -
-                        TimeUnit.HOURS.toMinutes(hour)
-                val second = TimeUnit.MILLISECONDS.toSeconds(millis) -
-                        TimeUnit.MINUTES.toSeconds(minute) -
-                        TimeUnit.HOURS.toSeconds(hour)
-
-                Log.d(TAG, "time:$hour $minute $second")
+                scheduleAlarm(Calendar.getInstance().apply {
+                    add(Calendar.HOUR, timeRemaining.hour)
+                    add(Calendar.MINUTE, timeRemaining.minute)
+                    add(Calendar.SECOND, timeRemaining.second)
+                })
             }
 
             ClockOption.EVENING_OUT -> {
@@ -170,25 +169,25 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun saveClockSchedule(clockOption: ClockOption) {
-        Log.d(TAG, "saving clock time ${clockOption.name}")
         val editor = sharedPreferences.edit()
         if (clockOption == ClockOption.MORNING_OUT) {
             editor.clear().apply()
             return
         }
+
         val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
         val json = JSONObject(schedule).apply {
-            put(clockOption.name, Calendar.getInstance().timeInMillis)
+            put(clockOption.name, LocalTime.now().toString())
         }
         editor.putString(KEY_SCHEDULE, json.toString())
         editor.apply()
     }
 
-    private fun readClockTime(clockOption: ClockOption): Long {
+    private fun readClockTime(clockOption: ClockOption): LocalTime {
         val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
         val json = JSONObject(schedule)
 
-        return json.getLong(clockOption.name)
+        return LocalTime.parse(json.getString(clockOption.name))
     }
 
     private fun scheduleAlarm(calendar: Calendar) {
