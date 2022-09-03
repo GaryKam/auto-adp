@@ -26,6 +26,7 @@ import org.json.JSONObject
 import java.time.Duration
 import java.time.LocalTime
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
@@ -39,7 +40,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppTheme {
-                //DismissAlarmDialog()
+                DismissAlarmDialog()
 
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -142,9 +143,7 @@ class MainActivity : ComponentActivity() {
 
         when (clockOption) {
             ClockOption.LUNCH_OUT -> {
-                scheduleAlarm(Calendar.getInstance().apply {
-                    add(Calendar.HOUR, 1)
-                })
+                setTimer(TimeUnit.HOURS.toSeconds(1).toInt())
             }
 
             ClockOption.LUNCH_IN -> {
@@ -206,6 +205,16 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(AlarmClock.ACTION_DISMISS_ALARM).apply {
             putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_LABEL)
             putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
+        }
+
+        startActivity(intent)
+    }
+
+    private fun setTimer(length: Int) {
+        val intent = Intent(AlarmClock.ACTION_SET_TIMER).apply {
+            putExtra(AlarmClock.EXTRA_LENGTH, length)
+            putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
+            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
         }
 
         startActivity(intent)
