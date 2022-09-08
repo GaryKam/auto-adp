@@ -5,18 +5,16 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.AlarmClock
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,6 +28,7 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
+    private val clockTimes: MutableList<String> = mutableListOf()
     private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,6 +36,11 @@ class MainActivity : ComponentActivity() {
 
         sharedPreferences =
             applicationContext.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
+        //sharedPreferences.edit().remove(KEY_SCHEDULE).apply()
+
+        for (clockOption in ClockOption.values()) {
+            clockTimes.add(clockOption.name + ": " + readClockTime(clockOption))
+        }
 
         setContent {
             AppTheme {
@@ -47,23 +51,26 @@ class MainActivity : ComponentActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
-                        modifier = Modifier.weight(2F),
+                        modifier = Modifier.weight(2f),
                         contentAlignment = Alignment.Center
                     ) {
                         ClockerTitle()
                     }
 
-                    Box(
-                        modifier = Modifier.weight(0.2F),
-                        contentAlignment = Alignment.BottomCenter
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        ClockerText(mainViewModel.clockOption)
+                        for (clockTime in clockTimes) {
+                            Text(text = clockTime)
+                        }
                     }
 
-                    Box(
-                        modifier = Modifier.weight(1F),
-                        contentAlignment = Alignment.TopCenter
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        ClockerText(mainViewModel.clockOption)
                         ClockerButton(mainViewModel.isClockedIn()) {
                             mainViewModel.clockInOut()
                             handleClockSchedule(mainViewModel.clockOption)
@@ -95,20 +102,11 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ClockerButton(clockedIn: Boolean, onClockChange: () -> Unit) {
-        var visible by remember { mutableStateOf(true) }
-
-        AnimatedVisibility(visible = visible) {
-            Button(
-                onClick = {
-                    //visible = !visible
-                    onClockChange()
-                }
-            ) {
-                Text(
-                    text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
-                    fontSize = 20.sp
-                )
-            }
+        Button(onClick = { onClockChange() }) {
+            Text(
+                text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
+                fontSize = 20.sp
+            )
         }
     }
 
@@ -169,8 +167,10 @@ class MainActivity : ComponentActivity() {
 
     private fun saveClockSchedule(clockOption: ClockOption) {
         val editor = sharedPreferences.edit()
+
         if (clockOption == ClockOption.MORNING_OUT) {
-            editor.clear().apply()
+            editor.remove(KEY_SCHEDULE)
+            editor.apply()
             return
         }
 
@@ -178,15 +178,22 @@ class MainActivity : ComponentActivity() {
         val json = JSONObject(schedule).apply {
             put(clockOption.name, LocalTime.now().toString())
         }
+
         editor.putString(KEY_SCHEDULE, json.toString())
         editor.apply()
+
+        clockTimes[clockOption.ordinal] = clockOption.name + ": " + readClockTime(clockOption)
     }
 
-    private fun readClockTime(clockOption: ClockOption): LocalTime {
+    private fun readClockTime(clockOption: ClockOption): LocalTime? {
         val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
         val json = JSONObject(schedule)
 
-        return LocalTime.parse(json.getString(clockOption.name))
+        return if (json.has(clockOption.name)) {
+            LocalTime.parse(json.getString(clockOption.name))
+        } else {
+            null
+        }
     }
 
     private fun scheduleAlarm(calendar: Calendar) {
