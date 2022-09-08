@@ -14,6 +14,12 @@ enum class ClockOption(@StringRes private val id: Int) {
         return context.getString(id)
     }
 
+    fun getPrevious(): ClockOption {
+        val values = enumValues<ClockOption>()
+        val previousOrdinal = if (ordinal == 0) values.size - 1 else ordinal - 1
+        return values[previousOrdinal]
+    }
+
     fun getNext(): ClockOption {
         val values = enumValues<ClockOption>()
         val nextOrdinal = (ordinal + 1) % values.size

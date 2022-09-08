@@ -22,13 +22,15 @@ import androidx.compose.ui.unit.sp
 import io.github.garykam.clocker.ui.theme.AppTheme
 import org.json.JSONObject
 import java.time.Duration
+import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
-    private val clockTimes: MutableList<String> = mutableListOf()
+    private val clockTimes: MutableMap<String, String> =
+        ClockOption.values().map { it.name }.associateWith { "" }.toMutableMap()
     private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,11 +38,8 @@ class MainActivity : ComponentActivity() {
 
         sharedPreferences =
             applicationContext.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
-        //sharedPreferences.edit().remove(KEY_SCHEDULE).apply()
 
-        for (clockOption in ClockOption.values()) {
-            clockTimes.add(clockOption.name + ": " + readClockTime(clockOption))
-        }
+        updateSchedule()
 
         setContent {
             AppTheme {
@@ -59,11 +58,9 @@ class MainActivity : ComponentActivity() {
 
                     Column(
                         modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.Start
                     ) {
-                        for (clockTime in clockTimes) {
-                            Text(text = clockTime)
-                        }
+                        ClockerSchedule()
                     }
 
                     Column(
@@ -73,7 +70,7 @@ class MainActivity : ComponentActivity() {
                         ClockerText(mainViewModel.clockOption)
                         ClockerButton(mainViewModel.isClockedIn()) {
                             mainViewModel.clockInOut()
-                            handleClockSchedule(mainViewModel.clockOption)
+                            handleClockOption(mainViewModel.clockOption)
                         }
                     }
                 }
@@ -87,6 +84,13 @@ class MainActivity : ComponentActivity() {
             text = getString(R.string.app_name).uppercase(),
             style = MaterialTheme.typography.h2
         )
+    }
+
+    @Composable
+    private fun ClockerSchedule() {
+        for ((name, time) in clockTimes) {
+            Text(text = "$name: $time")
+        }
     }
 
     @Composable
@@ -136,8 +140,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun handleClockSchedule(clockOption: ClockOption) {
-        saveClockSchedule(clockOption)
+    private fun updateSchedule() {
+        val todaysDate = LocalDate.now().toString()
+        if (sharedPreferences.getString(KEY_DATE, "") == todaysDate) {
+            for (clockOption in ClockOption.values().slice(1..4)) {
+                val clockTime = readFromSchedule(clockOption)?.toString() ?: ""
+
+                if (clockTime.isNotEmpty()) {
+                    clockTimes[clockOption.name] = clockTime
+                } else {
+                    mainViewModel.clockOption = clockOption.getPrevious()
+                    break
+                }
+            }
+        } else {
+            sharedPreferences.edit().apply {
+                remove(KEY_SCHEDULE)
+                putString(KEY_DATE, todaysDate)
+                apply()
+            }
+        }
+    }
+
+    private fun handleClockOption(clockOption: ClockOption) {
+        saveToSchedule(clockOption)
 
         when (clockOption) {
             ClockOption.LUNCH_OUT -> {
@@ -146,11 +172,11 @@ class MainActivity : ComponentActivity() {
 
             ClockOption.LUNCH_IN -> {
                 val timeWorked = Duration.between(
-                    readClockTime(ClockOption.MORNING_IN), readClockTime(ClockOption.LUNCH_IN)
+                    readFromSchedule(ClockOption.MORNING_IN), readFromSchedule(ClockOption.LUNCH_IN)
                 )
                 val timeRemaining = LocalTime.of(9, 0).minus(timeWorked)
 
-                scheduleAlarm(Calendar.getInstance().apply {
+                setAlarm(Calendar.getInstance().apply {
                     add(Calendar.HOUR, timeRemaining.hour)
                     add(Calendar.MINUTE, timeRemaining.minute)
                     add(Calendar.SECOND, timeRemaining.second)
@@ -165,13 +191,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun saveClockSchedule(clockOption: ClockOption) {
+    private fun saveToSchedule(clockOption: ClockOption) {
         val editor = sharedPreferences.edit()
 
-        if (clockOption == ClockOption.MORNING_OUT) {
-            editor.remove(KEY_SCHEDULE)
-            editor.apply()
-            return
+        if (clockOption == ClockOption.EVENING_OUT) {
+            editor.remove(KEY_DATE).apply()
         }
 
         val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
@@ -179,13 +203,14 @@ class MainActivity : ComponentActivity() {
             put(clockOption.name, LocalTime.now().toString())
         }
 
+        editor.putString(KEY_DATE, LocalDate.now().toString())
         editor.putString(KEY_SCHEDULE, json.toString())
         editor.apply()
 
-        clockTimes[clockOption.ordinal] = clockOption.name + ": " + readClockTime(clockOption)
+        clockTimes[clockOption.name] = readFromSchedule(clockOption).toString()
     }
 
-    private fun readClockTime(clockOption: ClockOption): LocalTime? {
+    private fun readFromSchedule(clockOption: ClockOption): LocalTime? {
         val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
         val json = JSONObject(schedule)
 
@@ -196,7 +221,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun scheduleAlarm(calendar: Calendar) {
+    private fun setAlarm(calendar: Calendar) {
         val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
             putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY))
             putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE))
@@ -230,6 +255,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         private const val TAG = "MainActivity"
         private const val SHARED_PREFERENCES = "io.github.garykam.clocker"
+        private const val KEY_DATE = "key_date"
         private const val KEY_SCHEDULE = "key_schedule"
     }
 }
