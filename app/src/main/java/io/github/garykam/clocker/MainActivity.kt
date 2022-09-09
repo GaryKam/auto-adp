@@ -8,6 +8,7 @@ import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,7 +39,7 @@ class MainActivity : ComponentActivity() {
 
         sharedPreferences =
             applicationContext.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
-
+        //sharedPreferences.edit().remove(KEY_DATE).apply()
         updateSchedule()
 
         setContent {
@@ -68,7 +69,7 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         ClockerText(mainViewModel.clockOption)
-                        ClockerButton(mainViewModel.isClockedIn()) {
+                        ClockerButton(mainViewModel.isClockedIn(), mainViewModel.clockOption) {
                             mainViewModel.clockInOut()
                             handleClockOption(mainViewModel.clockOption)
                         }
@@ -88,7 +89,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ClockerSchedule() {
-        for ((name, time) in clockTimes) {
+        for ((name, time) in clockTimes.filterNot { it.key == ClockOption.MORNING_OUT.name }) {
             Text(text = "$name: $time")
         }
     }
@@ -105,12 +106,14 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun ClockerButton(clockedIn: Boolean, onClockChange: () -> Unit) {
-        Button(onClick = { onClockChange() }) {
-            Text(
-                text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
-                fontSize = 20.sp
-            )
+    private fun ClockerButton(clockedIn: Boolean, clockOption: ClockOption, onClockChange: () -> Unit) {
+        AnimatedVisibility(visible = clockOption != ClockOption.EVENING_OUT) {
+            Button(onClick = { onClockChange() }) {
+                Text(
+                    text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
+                    fontSize = 20.sp
+                )
+            }
         }
     }
 
@@ -141,8 +144,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateSchedule() {
-        val todaysDate = LocalDate.now().toString()
-        if (sharedPreferences.getString(KEY_DATE, "") == todaysDate) {
+        val localDate = LocalDate.now().toString()
+        if (sharedPreferences.getString(KEY_DATE, "") == localDate) {
             for (clockOption in ClockOption.values().slice(1..4)) {
                 val clockTime = readFromSchedule(clockOption)?.toString() ?: ""
 
@@ -156,7 +159,7 @@ class MainActivity : ComponentActivity() {
         } else {
             sharedPreferences.edit().apply {
                 remove(KEY_SCHEDULE)
-                putString(KEY_DATE, todaysDate)
+                putString(KEY_DATE, localDate)
                 apply()
             }
         }
@@ -166,9 +169,9 @@ class MainActivity : ComponentActivity() {
         saveToSchedule(clockOption)
 
         when (clockOption) {
-            ClockOption.LUNCH_OUT -> {
-                setTimer(TimeUnit.HOURS.toSeconds(1).toInt())
-            }
+            ClockOption.MORNING_OUT, ClockOption.MORNING_IN -> return
+
+            ClockOption.LUNCH_OUT -> setTimer(TimeUnit.HOURS.toSeconds(1).toInt())
 
             ClockOption.LUNCH_IN -> {
                 val timeWorked = Duration.between(
@@ -183,31 +186,24 @@ class MainActivity : ComponentActivity() {
                 })
             }
 
-            ClockOption.EVENING_OUT -> {
-
-            }
-
-            else -> {}
+            ClockOption.EVENING_OUT -> sharedPreferences.edit().remove(KEY_DATE).apply()
         }
     }
 
     private fun saveToSchedule(clockOption: ClockOption) {
-        val editor = sharedPreferences.edit()
-
-        if (clockOption == ClockOption.EVENING_OUT) {
-            editor.remove(KEY_DATE).apply()
-        }
-
         val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
+        val localTime = LocalTime.now().toString()
         val json = JSONObject(schedule).apply {
-            put(clockOption.name, LocalTime.now().toString())
+            put(clockOption.name, localTime)
         }
 
-        editor.putString(KEY_DATE, LocalDate.now().toString())
-        editor.putString(KEY_SCHEDULE, json.toString())
-        editor.apply()
+        sharedPreferences.edit().apply {
+            putString(KEY_DATE, LocalDate.now().toString())
+            putString(KEY_SCHEDULE, json.toString())
+            apply()
+        }
 
-        clockTimes[clockOption.name] = readFromSchedule(clockOption).toString()
+        clockTimes[clockOption.name] = localTime
     }
 
     private fun readFromSchedule(clockOption: ClockOption): LocalTime? {
