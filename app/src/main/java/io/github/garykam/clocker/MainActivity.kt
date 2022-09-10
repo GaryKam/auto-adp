@@ -9,17 +9,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.github.garykam.clocker.ui.theme.AppTheme
 import org.json.JSONObject
 import java.time.Duration
@@ -39,13 +35,11 @@ class MainActivity : ComponentActivity() {
 
         sharedPreferences =
             applicationContext.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
-        //sharedPreferences.edit().remove(KEY_DATE).apply()
+
         updateSchedule()
 
         setContent {
             AppTheme {
-                DismissAlarmDialog()
-
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -83,14 +77,17 @@ class MainActivity : ComponentActivity() {
     private fun ClockerTitle() {
         Text(
             text = getString(R.string.app_name).uppercase(),
-            style = MaterialTheme.typography.h2
+            style = MaterialTheme.typography.h2,
         )
     }
 
     @Composable
     private fun ClockerSchedule() {
         for ((name, time) in clockTimes.filterNot { it.key == ClockOption.MORNING_OUT.name }) {
-            Text(text = "$name: $time")
+            Text(
+                text = "$name: $time",
+                style = MaterialTheme.typography.body1
+            )
         }
     }
 
@@ -98,20 +95,21 @@ class MainActivity : ComponentActivity() {
     private fun ClockerText(clockOption: ClockOption) {
         Text(
             text = clockOption.getText(this),
-            modifier = Modifier
-                .padding(bottom = 10.dp)
-                .clickable(enabled = true) { mainViewModel.openAlarmDialog = true },
             style = MaterialTheme.typography.h5
         )
     }
 
     @Composable
-    private fun ClockerButton(clockedIn: Boolean, clockOption: ClockOption, onClockChange: () -> Unit) {
+    private fun ClockerButton(
+        clockedIn: Boolean,
+        clockOption: ClockOption,
+        onClockChange: () -> Unit
+    ) {
         AnimatedVisibility(visible = clockOption != ClockOption.EVENING_OUT) {
             Button(onClick = { onClockChange() }) {
                 Text(
                     text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
-                    fontSize = 20.sp
+                    style = MaterialTheme.typography.button
                 )
             }
         }
