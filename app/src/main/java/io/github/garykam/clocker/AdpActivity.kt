@@ -28,20 +28,31 @@ class AdpActivity : ComponentActivity() {
     private fun AdpView() {
         AndroidView(factory = {
             WebView(this).apply {
-                var page = 0
+                var page = Page.WELCOME
 
-                loadUrl("https://login.adp.com/welcome")
+                loadUrl(ADP_URL)
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
 
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
-                        if (page == 0) {
-                            page++
-                            visitLoginPage(view)
-                        } else if (page == 1) {
-                            page++
-                            loginWithUserCredentials(view)
+                        when (page) {
+                            Page.WELCOME -> {
+                                visitLoginPage(view)
+                                page = Page.SIGN_IN
+                            }
+
+                            Page.SIGN_IN -> {
+                                loginWithUserCredentials(view)
+                                page = Page.HOME
+                            }
+
+                            Page.HOME -> {
+                                clockOut(view)
+                                page = Page.OTHER
+                            }
+
+                            Page.OTHER -> {}
                         }
                     }
                 }
@@ -103,7 +114,26 @@ class AdpActivity : ComponentActivity() {
         }, DELAY * 4)
     }
 
+    private fun clockOut(webView: WebView?) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            webView?.loadUrl(
+                "javascript: (function() {                                                                  " +
+                        "clickEvent = document.createEvent('HTMLEvents');                                   " +
+                        "clickEvent.initEvent('click', true, true);                                         " +
+                        "actionsButton = document.getElementById('chp-time-portlet-view-more-actions-btn'); " +
+                        "actionsButton.scrollIntoView();                                                    " +
+                        "actionsButton.dispatchEvent(clickEvent);                                           " +
+                        "clockOutButton = document.getElementById('btn-id-more-actions-Clock Out');         " +
+                        "clockOutButton.dispatchEvent(clickEvent);                                          " +
+                        "}) ()"
+            )
+        }, DELAY * 10)
+    }
+
     companion object {
+        private const val ADP_URL = "https://login.adp.com/welcome"
         private const val DELAY = 500L
+
+        private enum class Page { WELCOME, SIGN_IN, HOME, OTHER }
     }
 }
