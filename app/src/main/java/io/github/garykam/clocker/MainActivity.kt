@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import io.github.garykam.clocker.ui.theme.AppTheme
 import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
@@ -36,7 +37,7 @@ class MainActivity : ComponentActivity() {
         sharedPreferences =
             applicationContext.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
 
-        updateSchedule()
+        loadSchedule()
 
         setContent {
             AppTheme {
@@ -63,7 +64,7 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         ClockerText(mainViewModel.clockOption)
-                        ClockerButton(mainViewModel.isClockedIn(), mainViewModel.clockOption) {
+                        ClockerButton(mainViewModel.isClockedIn()) {
                             mainViewModel.clockInOut()
                             handleClockOption(mainViewModel.clockOption)
                         }
@@ -84,11 +85,19 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun ClockerSchedule() {
         for ((name, time) in clockTimes.filterNot { it.key == ClockOption.MORNING_OUT.name }) {
+            val text = "$name: " + if (time.isEmpty()) {
+                time
+            } else {
+                val date = SimpleDateFormat("HH:mm:ss.SSS", Locale.US).parse(time)!!
+                SimpleDateFormat("h:mm a", Locale.US).format(date)
+            }
+
             Text(
-                text = "$name: $time",
+                text = text,
                 style = MaterialTheme.typography.body1
             )
         }
+
     }
 
     @Composable
@@ -102,10 +111,9 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun ClockerButton(
         clockedIn: Boolean,
-        clockOption: ClockOption,
         onClockChange: () -> Unit
     ) {
-        AnimatedVisibility(visible = clockOption != ClockOption.EVENING_OUT) {
+        AnimatedVisibility(visible = mainViewModel.isClockButtonVisible()) {
             Button(onClick = { onClockChange() }) {
                 Text(
                     text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
@@ -141,7 +149,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun updateSchedule() {
+    private fun loadSchedule() {
         val localDate = LocalDate.now().toString()
         if (sharedPreferences.getString(KEY_DATE, "") == localDate) {
             for (clockOption in ClockOption.values().slice(1..4)) {
@@ -149,6 +157,7 @@ class MainActivity : ComponentActivity() {
 
                 if (clockTime.isNotEmpty()) {
                     clockTimes[clockOption.name] = clockTime
+                    mainViewModel.clockOption = clockOption
                 } else {
                     mainViewModel.clockOption = clockOption.getPrevious()
                     break
@@ -167,7 +176,7 @@ class MainActivity : ComponentActivity() {
         saveToSchedule(clockOption)
 
         when (clockOption) {
-            ClockOption.MORNING_OUT, ClockOption.MORNING_IN -> return
+            ClockOption.MORNING_OUT, ClockOption.MORNING_IN, ClockOption.EVENING_OUT -> return
 
             ClockOption.LUNCH_OUT -> setTimer(TimeUnit.HOURS.toSeconds(1).toInt())
 
@@ -183,8 +192,6 @@ class MainActivity : ComponentActivity() {
                     add(Calendar.SECOND, timeRemaining.second)
                 })
             }
-
-            ClockOption.EVENING_OUT -> sharedPreferences.edit().remove(KEY_DATE).apply()
         }
     }
 

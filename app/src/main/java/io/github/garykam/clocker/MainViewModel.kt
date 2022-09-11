@@ -15,4 +15,6 @@ class MainViewModel : ViewModel() {
 
     fun isClockedIn(): Boolean =
         clockOption == ClockOption.MORNING_IN || clockOption == ClockOption.LUNCH_IN
+
+    fun isClockButtonVisible() = clockOption != ClockOption.EVENING_OUT
 }
