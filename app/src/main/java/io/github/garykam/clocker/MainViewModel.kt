@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
 class MainViewModel : ViewModel() {
-    var openAlarmDialog: Boolean by mutableStateOf(false)
     var clockOption: ClockOption by mutableStateOf(ClockOption.MORNING_OUT)
     val clockTimes: MutableMap<String, String> =
         ClockOption.values().map { it.name }.associateWith { "" }.toMutableMap()
@@ -15,8 +14,9 @@ class MainViewModel : ViewModel() {
         clockOption = clockOption.getNext()
     }
 
-    fun isClockedIn(): Boolean =
-        clockOption == ClockOption.MORNING_IN || clockOption == ClockOption.LUNCH_IN
+    fun isClockedIn() = clockOption == ClockOption.MORNING_IN || clockOption == ClockOption.LUNCH_IN
 
-    fun isClockButtonVisible() = clockOption != ClockOption.EVENING_OUT
+    fun isEndOfDay() = clockOption == ClockOption.EVENING_OUT
+
+    fun hasBroadcastScheduled() = clockOption == ClockOption.LUNCH_IN
 }

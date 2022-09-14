@@ -10,8 +10,9 @@
     <string name="clock_in_lunch">Done for the day!</string>
     <string name="clock_out_evening">Have a good evening!</string>
 
-    <string name="alarm_delete">Delete Alarm?</string>
-    <string name="alarm_delete_confirmation">Do you want to delete the Clocker alarm? You will be sent to the Android Clock app.</string>
+    <string name="auto_clock_out_cancel">Cancel Auto Clock-Out</string>
+    <string name="auto_clock_out_canceled">Canceled clock-out broadcast</string>
+    <string name="auto_clock_out_cancel_invalid">Clock-out broadcast is not scheduled</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>

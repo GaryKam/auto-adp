@@ -23,8 +23,11 @@ class AdpActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         Log.d(TAG, "onCreate")
-
         setTurnScreenOn(true)
+
+        ClockHelper.loadSchedule(this, mainViewModel)
+        ClockHelper.handleClockOption(this, mainViewModel)
+
         setContent {
             AdpView()
         }
@@ -139,8 +142,6 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
         }, DELAY * 10)
-
-        ClockHelper.handleClockOption(this, mainViewModel)
     }
 
     companion object {

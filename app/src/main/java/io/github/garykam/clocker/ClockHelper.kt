@@ -39,6 +39,7 @@ object ClockHelper {
     }
 
     fun handleClockOption(context: Context, mainViewModel: MainViewModel) {
+        mainViewModel.clockInOut()
         saveToSchedule(context, mainViewModel)
 
         when (mainViewModel.clockOption) {
@@ -55,12 +56,6 @@ object ClockHelper {
                     readFromSchedule(context, ClockOption.LUNCH_IN)
                 )
                 val timeRemaining = LocalTime.of(9, 0).minus(timeWorked)
-
-                /*setAlarm(Calendar.getInstance().apply {
-                    add(Calendar.HOUR, timeRemaining.hour)
-                    add(Calendar.MINUTE, timeRemaining.minute)
-                    add(Calendar.SECOND, timeRemaining.second)
-                })*/
 
                 val time = Calendar.getInstance().apply {
                     add(Calendar.HOUR, timeRemaining.hour)

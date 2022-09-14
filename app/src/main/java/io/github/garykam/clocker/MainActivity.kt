@@ -1,6 +1,7 @@
 package io.github.garykam.clocker
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -9,7 +10,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import io.github.garykam.clocker.ui.theme.AppTheme
@@ -26,6 +29,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppTheme {
+                TopAppBar()
+
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -50,7 +55,6 @@ class MainActivity : ComponentActivity() {
                     ) {
                         ClockerText(mainViewModel.clockOption)
                         ClockerButton(mainViewModel.isClockedIn()) {
-                            mainViewModel.clockInOut()
                             ClockHelper.handleClockOption(
                                 this@MainActivity,
                                 mainViewModel
@@ -60,6 +64,39 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    @Composable
+    private fun TopAppBar() {
+        var expandMenu by remember { mutableStateOf(false) }
+
+        TopAppBar(
+            title = { Text(text = getString(R.string.app_name)) },
+            actions = {
+                IconButton(onClick = { expandMenu = !expandMenu }) {
+                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "menu")
+                }
+
+                DropdownMenu(
+                    expanded = expandMenu,
+                    onDismissRequest = { expandMenu = false }) {
+                    DropdownMenuItem(onClick = {
+                        expandMenu = false
+
+                        val text = if (mainViewModel.hasBroadcastScheduled()) {
+                            AlarmHelper.cancelBroadcast(this@MainActivity)
+                            getString(R.string.auto_clock_out_canceled)
+                        } else {
+                            getString(R.string.auto_clock_out_cancel_invalid)
+                        }
+
+                        Toast.makeText(this@MainActivity, text, Toast.LENGTH_SHORT).show()
+                    }) {
+                        Text(text = getString(R.string.auto_clock_out_cancel))
+                    }
+                }
+            }
+        )
     }
 
     @Composable
@@ -101,39 +138,13 @@ class MainActivity : ComponentActivity() {
         clockedIn: Boolean,
         onClockChange: () -> Unit
     ) {
-        AnimatedVisibility(visible = mainViewModel.isClockButtonVisible()) {
+        AnimatedVisibility(visible = !mainViewModel.isEndOfDay()) {
             Button(onClick = { onClockChange() }) {
                 Text(
                     text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
                     style = MaterialTheme.typography.button
                 )
             }
-        }
-    }
-
-    @Composable
-    private fun DismissAlarmDialog() {
-        if (mainViewModel.openAlarmDialog) {
-            AlertDialog(
-                onDismissRequest = { mainViewModel.openAlarmDialog = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        mainViewModel.openAlarmDialog = false
-                        AlarmHelper.dismissAlarm(this)
-                    }) {
-                        Text(text = getString(R.string.yes))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        mainViewModel.openAlarmDialog = false
-                    }) {
-                        Text(text = getString(R.string.no))
-                    }
-                },
-                title = { Text(text = getString(R.string.alarm_delete)) },
-                text = { Text(text = getString(R.string.alarm_delete_confirmation)) }
-            )
         }
     }
 }
