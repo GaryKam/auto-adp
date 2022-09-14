@@ -4,20 +4,27 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.KeyCharacterMap
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 
 class AdpActivity : ComponentActivity() {
+    private val mainViewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Log.d(TAG, "onCreate")
+
+        setTurnScreenOn(true)
         setContent {
             AdpView()
         }
@@ -26,6 +33,7 @@ class AdpActivity : ComponentActivity() {
     @Composable
     @SuppressLint("SetJavaScriptEnabled")
     private fun AdpView() {
+        Log.d(TAG, "AdpView")
         AndroidView(factory = {
             WebView(this).apply {
                 var page = Page.WELCOME
@@ -61,6 +69,7 @@ class AdpActivity : ComponentActivity() {
     }
 
     private fun visitLoginPage(webView: WebView?) {
+        Log.d(TAG, "visitLoginPage")
         webView?.loadUrl(
             "javascript: (function() {                                                         " +
                     "clickEvent = document.createEvent('HTMLEvents');                          " +
@@ -76,8 +85,9 @@ class AdpActivity : ComponentActivity() {
     }
 
     private fun loginWithUserCredentials(webView: WebView?) {
-        val username = "username"
-        val password = "password"
+        Log.d(TAG, "loginWithUserCredentials")
+        val username = USERNAME
+        val password = PASSWORD
         val keyMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
 
         Handler(Looper.getMainLooper()).postDelayed({
@@ -115,6 +125,7 @@ class AdpActivity : ComponentActivity() {
     }
 
     private fun clockOut(webView: WebView?) {
+        Log.d(TAG, "clockOut")
         Handler(Looper.getMainLooper()).postDelayed({
             webView?.loadUrl(
                 "javascript: (function() {                                                                  " +
@@ -128,10 +139,15 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
         }, DELAY * 10)
+
+        ClockHelper.handleClockOption(this, mainViewModel)
     }
 
     companion object {
+        private const val TAG = "AdpActivity"
         private const val ADP_URL = "https://login.adp.com/welcome"
+        private const val USERNAME = "username"
+        private const val PASSWORD = "password"
         private const val DELAY = 500L
 
         private enum class Page { WELCOME, SIGN_IN, HOME, OTHER }

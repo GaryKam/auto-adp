@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 class MainViewModel : ViewModel() {
     var openAlarmDialog: Boolean by mutableStateOf(false)
     var clockOption: ClockOption by mutableStateOf(ClockOption.MORNING_OUT)
+    val clockTimes: MutableMap<String, String> =
+        ClockOption.values().map { it.name }.associateWith { "" }.toMutableMap()
 
     fun clockInOut() {
         clockOption = clockOption.getNext()

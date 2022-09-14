@@ -1,10 +1,6 @@
 package io.github.garykam.clocker
 
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
-import android.provider.AlarmClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -17,27 +13,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import io.github.garykam.clocker.ui.theme.AppTheme
-import org.json.JSONObject
 import java.text.SimpleDateFormat
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalTime
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
-    private val clockTimes: MutableMap<String, String> =
-        ClockOption.values().map { it.name }.associateWith { "" }.toMutableMap()
-    private lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        sharedPreferences =
-            applicationContext.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
-
-        loadSchedule()
+        ClockHelper.loadSchedule(this, mainViewModel)
 
         setContent {
             AppTheme {
@@ -66,7 +51,10 @@ class MainActivity : ComponentActivity() {
                         ClockerText(mainViewModel.clockOption)
                         ClockerButton(mainViewModel.isClockedIn()) {
                             mainViewModel.clockInOut()
-                            handleClockOption(mainViewModel.clockOption)
+                            ClockHelper.handleClockOption(
+                                this@MainActivity,
+                                mainViewModel
+                            )
                         }
                     }
                 }
@@ -84,7 +72,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ClockerSchedule() {
-        for ((name, time) in clockTimes.filterNot { it.key == ClockOption.MORNING_OUT.name }) {
+        for ((name, time) in mainViewModel.clockTimes.filterNot { it.key == ClockOption.MORNING_OUT.name }) {
             val text = "$name: " + if (time.isEmpty()) {
                 time
             } else {
@@ -131,7 +119,7 @@ class MainActivity : ComponentActivity() {
                 confirmButton = {
                     TextButton(onClick = {
                         mainViewModel.openAlarmDialog = false
-                        dismissAlarm()
+                        AlarmHelper.dismissAlarm(this)
                     }) {
                         Text(text = getString(R.string.yes))
                     }
@@ -147,116 +135,5 @@ class MainActivity : ComponentActivity() {
                 text = { Text(text = getString(R.string.alarm_delete_confirmation)) }
             )
         }
-    }
-
-    private fun loadSchedule() {
-        val localDate = LocalDate.now().toString()
-        if (sharedPreferences.getString(KEY_DATE, "") == localDate) {
-            for (clockOption in ClockOption.values().slice(1..4)) {
-                val clockTime = readFromSchedule(clockOption)?.toString() ?: ""
-
-                if (clockTime.isNotEmpty()) {
-                    clockTimes[clockOption.name] = clockTime
-                    mainViewModel.clockOption = clockOption
-                } else {
-                    mainViewModel.clockOption = clockOption.getPrevious()
-                    break
-                }
-            }
-        } else {
-            sharedPreferences.edit().apply {
-                remove(KEY_SCHEDULE)
-                putString(KEY_DATE, localDate)
-                apply()
-            }
-        }
-    }
-
-    private fun handleClockOption(clockOption: ClockOption) {
-        saveToSchedule(clockOption)
-
-        when (clockOption) {
-            ClockOption.MORNING_OUT, ClockOption.MORNING_IN, ClockOption.EVENING_OUT -> return
-
-            ClockOption.LUNCH_OUT -> setTimer(TimeUnit.HOURS.toSeconds(1).toInt())
-
-            ClockOption.LUNCH_IN -> {
-                val timeWorked = Duration.between(
-                    readFromSchedule(ClockOption.MORNING_IN), readFromSchedule(ClockOption.LUNCH_IN)
-                )
-                val timeRemaining = LocalTime.of(9, 0).minus(timeWorked)
-
-                setAlarm(Calendar.getInstance().apply {
-                    add(Calendar.HOUR, timeRemaining.hour)
-                    add(Calendar.MINUTE, timeRemaining.minute)
-                    add(Calendar.SECOND, timeRemaining.second)
-                })
-            }
-        }
-    }
-
-    private fun saveToSchedule(clockOption: ClockOption) {
-        val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
-        val localTime = LocalTime.now().toString()
-        val json = JSONObject(schedule).apply {
-            put(clockOption.name, localTime)
-        }
-
-        sharedPreferences.edit().apply {
-            putString(KEY_DATE, LocalDate.now().toString())
-            putString(KEY_SCHEDULE, json.toString())
-            apply()
-        }
-
-        clockTimes[clockOption.name] = localTime
-    }
-
-    private fun readFromSchedule(clockOption: ClockOption): LocalTime? {
-        val schedule = sharedPreferences.getString(KEY_SCHEDULE, "{}")!!
-        val json = JSONObject(schedule)
-
-        return if (json.has(clockOption.name)) {
-            LocalTime.parse(json.getString(clockOption.name))
-        } else {
-            null
-        }
-    }
-
-    private fun setAlarm(calendar: Calendar) {
-        val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
-            putExtra(AlarmClock.EXTRA_HOUR, calendar.get(Calendar.HOUR_OF_DAY))
-            putExtra(AlarmClock.EXTRA_MINUTES, calendar.get(Calendar.MINUTE))
-            putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
-            putExtra(AlarmClock.EXTRA_VIBRATE, true)
-            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
-        }
-
-        startActivity(intent)
-    }
-
-    private fun dismissAlarm() {
-        val intent = Intent(AlarmClock.ACTION_DISMISS_ALARM).apply {
-            putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_LABEL)
-            putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
-        }
-
-        startActivity(intent)
-    }
-
-    private fun setTimer(length: Int) {
-        val intent = Intent(AlarmClock.ACTION_SET_TIMER).apply {
-            putExtra(AlarmClock.EXTRA_LENGTH, length)
-            putExtra(AlarmClock.EXTRA_MESSAGE, getString(R.string.app_name))
-            putExtra(AlarmClock.EXTRA_SKIP_UI, true)
-        }
-
-        startActivity(intent)
-    }
-
-    companion object {
-        private const val TAG = "MainActivity"
-        private const val SHARED_PREFERENCES = "io.github.garykam.clocker"
-        private const val KEY_DATE = "key_date"
-        private const val KEY_SCHEDULE = "key_schedule"
     }
 }
