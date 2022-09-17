@@ -6,10 +6,9 @@ import android.content.Intent
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
-        val i = Intent(context, AdpActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context?.let {
+            val i = Intent(it, NotificationService::class.java)
+            it.startForegroundService(i)
         }
-
-        context?.startActivity(i)
     }
 }

@@ -16,6 +16,7 @@ object ClockHelper {
     fun loadSchedule(context: Context, mainViewModel: MainViewModel) {
         val sharedPreferences =
             context.getSharedPreferences(SHARED_PREFERENCES, Context.MODE_PRIVATE)
+        sharedPreferences.edit().remove(KEY_DATE).apply()
         val localDate = LocalDate.now().toString()
         if (sharedPreferences.getString(KEY_DATE, "") == localDate) {
             for (clockOption in ClockOption.values().slice(1..4)) {
@@ -57,10 +58,14 @@ object ClockHelper {
                 )
                 val timeRemaining = LocalTime.of(9, 0).minus(timeWorked)
 
-                val time = Calendar.getInstance().apply {
+                /*val time = Calendar.getInstance().apply {
                     add(Calendar.HOUR, timeRemaining.hour)
                     add(Calendar.MINUTE, timeRemaining.minute)
                     add(Calendar.SECOND, timeRemaining.second)
+                }.timeInMillis*/
+
+                val time = Calendar.getInstance().apply {
+                    add(Calendar.SECOND, 5)
                 }.timeInMillis
 
                 AlarmHelper.setBroadcast(context, time)

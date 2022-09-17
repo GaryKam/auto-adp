@@ -23,6 +23,7 @@ class AdpActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         Log.d(TAG, "onCreate")
+        setShowWhenLocked(true)
         setTurnScreenOn(true)
 
         ClockHelper.loadSchedule(this, mainViewModel)
@@ -59,7 +60,7 @@ class AdpActivity : ComponentActivity() {
                             }
 
                             Page.HOME -> {
-                                clockOut(view)
+                                //clockOut(view)
                                 page = Page.OTHER
                             }
 
@@ -113,7 +114,7 @@ class AdpActivity : ComponentActivity() {
             keyMap.getEvents(password.toCharArray()).forEach {
                 webView?.dispatchKeyEvent(it)
             }
-        }, DELAY * 3)
+        }, DELAY * 6)
 
         Handler(Looper.getMainLooper()).postDelayed({
             webView?.loadUrl(
@@ -124,7 +125,7 @@ class AdpActivity : ComponentActivity() {
                         "signInButton.dispatchEvent(clickEvent);            " +
                         "}) ()"
             )
-        }, DELAY * 4)
+        }, DELAY * 12)
     }
 
     private fun clockOut(webView: WebView?) {
@@ -141,7 +142,7 @@ class AdpActivity : ComponentActivity() {
                         "clockOutButton.dispatchEvent(clickEvent);                                          " +
                         "}) ()"
             )
-        }, DELAY * 10)
+        }, DELAY * 20)
     }
 
     companion object {
