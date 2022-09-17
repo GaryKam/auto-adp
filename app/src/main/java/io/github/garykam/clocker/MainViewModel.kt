@@ -7,9 +7,9 @@ import androidx.lifecycle.ViewModel
 
 class MainViewModel : ViewModel() {
     var clockOption: ClockOption by mutableStateOf(ClockOption.MORNING_OUT)
+    var isBroadcastScheduled: Boolean by mutableStateOf(false)
     val clockTimes: MutableMap<String, String> =
         ClockOption.values().map { it.name }.associateWith { "" }.toMutableMap()
-    var broadcastScheduled: Boolean by mutableStateOf(false)
 
     fun clockInOut() {
         clockOption = clockOption.getNext()

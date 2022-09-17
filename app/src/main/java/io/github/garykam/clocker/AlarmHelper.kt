@@ -14,7 +14,7 @@ object AlarmHelper {
             putExtra(AlarmClock.EXTRA_SKIP_UI, true)
         }
 
-        //context.startActivity(intent)
+        context.startActivity(intent)
     }
 
     fun setBroadcast(context: Context, time: Long) {
@@ -34,7 +34,5 @@ object AlarmHelper {
             Intent(context, AlarmReceiver::class.java),
             PendingIntent.FLAG_IMMUTABLE
         )
-
-
     }
 }

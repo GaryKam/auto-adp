@@ -60,7 +60,7 @@ class AdpActivity : ComponentActivity() {
                             }
 
                             Page.HOME -> {
-                                //clockOut(view)
+                                clockOut(view)
                                 page = Page.OTHER
                             }
 

@@ -1,6 +1,8 @@
 package io.github.garykam.clocker
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -83,8 +85,8 @@ class MainActivity : ComponentActivity() {
                     DropdownMenuItem(onClick = {
                         expandMenu = false
 
-                        val text = if (mainViewModel.broadcastScheduled) {
-                            mainViewModel.broadcastScheduled = false
+                        val text = if (mainViewModel.isBroadcastScheduled) {
+                            mainViewModel.isBroadcastScheduled = false
                             AlarmHelper.cancelBroadcast(this@MainActivity)
                             getString(R.string.auto_clock_out_canceled)
                         } else {
@@ -123,7 +125,6 @@ class MainActivity : ComponentActivity() {
                 style = MaterialTheme.typography.body1
             )
         }
-
     }
 
     @Composable
@@ -139,8 +140,18 @@ class MainActivity : ComponentActivity() {
         clockedIn: Boolean,
         onClockChange: () -> Unit
     ) {
+        var enabled by remember { mutableStateOf(true) }
+
         AnimatedVisibility(visible = !mainViewModel.isEndOfDay()) {
-            Button(onClick = { onClockChange() }, enabled = !mainViewModel.broadcastScheduled) {
+            Button(
+                onClick = {
+                    onClockChange()
+
+                    enabled = false
+                    Handler(Looper.getMainLooper()).postDelayed({ enabled = true }, 5000L)
+                },
+                enabled = enabled && !mainViewModel.isBroadcastScheduled
+            ) {
                 Text(
                     text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
                     style = MaterialTheme.typography.button
