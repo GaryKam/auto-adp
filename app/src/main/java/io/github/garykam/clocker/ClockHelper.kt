@@ -65,10 +65,11 @@ object ClockHelper {
                 }.timeInMillis*/
 
                 val time = Calendar.getInstance().apply {
-                    add(Calendar.SECOND, 5)
+                    add(Calendar.SECOND, 9)
                 }.timeInMillis
 
                 AlarmHelper.setBroadcast(context, time)
+                mainViewModel.broadcastScheduled = true
             }
         }
     }

@@ -83,7 +83,8 @@ class MainActivity : ComponentActivity() {
                     DropdownMenuItem(onClick = {
                         expandMenu = false
 
-                        val text = if (mainViewModel.hasBroadcastScheduled()) {
+                        val text = if (mainViewModel.broadcastScheduled) {
+                            mainViewModel.broadcastScheduled = false
                             AlarmHelper.cancelBroadcast(this@MainActivity)
                             getString(R.string.auto_clock_out_canceled)
                         } else {
@@ -139,7 +140,7 @@ class MainActivity : ComponentActivity() {
         onClockChange: () -> Unit
     ) {
         AnimatedVisibility(visible = !mainViewModel.isEndOfDay()) {
-            Button(onClick = { onClockChange() }) {
+            Button(onClick = { onClockChange() }, enabled = !mainViewModel.broadcastScheduled) {
                 Text(
                     text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
                     style = MaterialTheme.typography.button
