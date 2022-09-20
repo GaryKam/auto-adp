@@ -23,11 +23,13 @@ import java.util.*
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
+    private lateinit var clockHelper: ClockHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        ClockHelper.loadSchedule(this, mainViewModel)
+        clockHelper = ClockHelper(this, mainViewModel)
+        clockHelper.loadSchedule()
 
         setContent {
             AppTheme {
@@ -57,10 +59,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         ClockerText(mainViewModel.clockOption)
                         ClockerButton(mainViewModel.isClockedIn()) {
-                            ClockHelper.handleClockOption(
-                                this@MainActivity,
-                                mainViewModel
-                            )
+                            clockHelper.handleClockOption()
                         }
                     }
                 }
@@ -86,7 +85,7 @@ class MainActivity : ComponentActivity() {
                         expandMenu = false
 
                         val text = if (mainViewModel.isBroadcastScheduled) {
-                            mainViewModel.isBroadcastScheduled = false
+                            clockHelper.setBroadcastScheduled(false)
                             AlarmHelper.cancelBroadcast(this@MainActivity)
                             getString(R.string.auto_clock_out_canceled)
                         } else {
@@ -96,6 +95,13 @@ class MainActivity : ComponentActivity() {
                         Toast.makeText(this@MainActivity, text, Toast.LENGTH_SHORT).show()
                     }) {
                         Text(text = getString(R.string.auto_clock_out_cancel))
+                    }
+
+                    DropdownMenuItem(onClick = {
+                        expandMenu = false
+                        startService(NotificationService.createStopServiceIntent(this@MainActivity))
+                    }) {
+                        Text(text = "Clear Notification")
                     }
                 }
             }

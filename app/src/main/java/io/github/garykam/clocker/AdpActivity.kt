@@ -26,8 +26,11 @@ class AdpActivity : ComponentActivity() {
         setShowWhenLocked(true)
         setTurnScreenOn(true)
 
-        ClockHelper.loadSchedule(this, mainViewModel)
-        ClockHelper.handleClockOption(this, mainViewModel)
+        ClockHelper(this, mainViewModel).apply {
+            loadSchedule()
+            handleClockOption()
+            setBroadcastScheduled(false)
+        }
 
         setContent {
             AdpView()

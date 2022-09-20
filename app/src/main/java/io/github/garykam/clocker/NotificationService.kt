@@ -13,6 +13,12 @@ class NotificationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == STOP_SERVICE_ACTION) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            return super.onStartCommand(intent, flags, startId)
+        }
+
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
@@ -38,7 +44,8 @@ class NotificationService : Service() {
             lightColor = android.graphics.Color.RED
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }.also {
-            val notificationService = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationService =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationService.createNotificationChannel(it)
         }
 
@@ -51,5 +58,12 @@ class NotificationService : Service() {
     companion object {
         private const val NOTIFICATION_CHANNEL_ID = "clocker_channel_01"
         private const val NOTIFICATION_CHANNEL_NAME = "clocker_channel"
+        private const val STOP_SERVICE_ACTION = "stop_service_action"
+
+        fun createStopServiceIntent(context: Context): Intent {
+            return Intent(context, NotificationService::class.java).apply {
+                action = STOP_SERVICE_ACTION
+            }
+        }
     }
 }
