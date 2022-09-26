@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 
 class MainViewModel : ViewModel() {
     var clockOption: ClockOption by mutableStateOf(ClockOption.MORNING_OUT)
-    var isBroadcastScheduled: Boolean by mutableStateOf(false)
+    var broadcastScheduleTime: String by mutableStateOf("")
     val clockTimes: MutableMap<String, String> =
         ClockOption.values().map { it.name }.associateWith { "" }.toMutableMap()
 
@@ -18,4 +18,6 @@ class MainViewModel : ViewModel() {
     fun isClockedIn() = clockOption == ClockOption.MORNING_IN || clockOption == ClockOption.LUNCH_IN
 
     fun isEndOfDay() = clockOption == ClockOption.EVENING_OUT
+
+    fun isBroadcastScheduled() = broadcastScheduleTime.isNotEmpty()
 }

@@ -29,7 +29,7 @@ class AdpActivity : ComponentActivity() {
         ClockHelper(this, mainViewModel).apply {
             loadSchedule()
             handleClockOption()
-            setBroadcastScheduled(false)
+            setBroadcastScheduled("")
         }
 
         setContent {

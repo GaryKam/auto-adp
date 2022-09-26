@@ -13,7 +13,7 @@
     <string name="auto_clock_out_cancel">Cancel Auto Clock-Out</string>
     <string name="auto_clock_out_canceled">Canceled clock-out broadcast</string>
     <string name="auto_clock_out_cancel_invalid">Clock-out broadcast is not scheduled</string>
+    <string name="auto_clock_out_scheduled">Auto clock-out scheduled for %s</string>
 
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
+    <string name="clock_notification_clear">Clear Notification</string>
 </resources>

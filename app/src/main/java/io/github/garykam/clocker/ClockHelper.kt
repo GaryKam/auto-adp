@@ -22,8 +22,8 @@ class ClockHelper(private val context: Context, private val mainViewModel: MainV
                 if (clockTime.isNotEmpty()) {
                     mainViewModel.clockOption = clockOption
                     mainViewModel.clockTimes[clockOption.name] = clockTime
-                    mainViewModel.isBroadcastScheduled =
-                        sharedPreferences.getBoolean(KEY_BROADCAST_SCHEDULED, false)
+                    mainViewModel.broadcastScheduleTime =
+                        sharedPreferences.getString(KEY_BROADCAST_SCHEDULE_TIME, "")!!
                 } else {
                     mainViewModel.clockOption = clockOption.getPrevious()
                     break
@@ -33,7 +33,7 @@ class ClockHelper(private val context: Context, private val mainViewModel: MainV
             sharedPreferences.edit().apply {
                 remove(KEY_SCHEDULE)
                 putString(KEY_DATE, localDate)
-                putBoolean(KEY_BROADCAST_SCHEDULED, false)
+                putString(KEY_BROADCAST_SCHEDULE_TIME, "")
                 apply()
             }
         }
@@ -55,25 +55,20 @@ class ClockHelper(private val context: Context, private val mainViewModel: MainV
                 )
                 val timeRemaining = LocalTime.of(9, 0).minus(timeWorked)
 
-                val time = Calendar.getInstance().apply {
+                val calendar = Calendar.getInstance().apply {
                     add(Calendar.HOUR, timeRemaining.hour)
                     add(Calendar.MINUTE, timeRemaining.minute)
                     add(Calendar.SECOND, timeRemaining.second)
-                }.timeInMillis
+                }
 
-                AlarmHelper.setBroadcast(context, time)
-                setBroadcastScheduled(true)
+                AlarmHelper.setBroadcast(context, calendar.timeInMillis)
+                setBroadcastScheduled(calendar.time.toString())
             }
 
             else -> {}
         }
 
         saveToSchedule()
-    }
-
-    fun setBroadcastScheduled(isBroadcastScheduled: Boolean) {
-        mainViewModel.isBroadcastScheduled = isBroadcastScheduled
-        sharedPreferences.edit().putBoolean(KEY_BROADCAST_SCHEDULED, isBroadcastScheduled).apply()
     }
 
     private fun readFromSchedule(clockOption: ClockOption): LocalTime? {
@@ -97,17 +92,22 @@ class ClockHelper(private val context: Context, private val mainViewModel: MainV
         sharedPreferences.edit().apply {
             putString(KEY_DATE, LocalDate.now().toString())
             putString(KEY_SCHEDULE, json.toString())
-            putBoolean(KEY_BROADCAST_SCHEDULED, mainViewModel.isBroadcastScheduled)
             apply()
         }
 
         mainViewModel.clockTimes[mainViewModel.clockOption.name] = localTime
     }
 
+    fun setBroadcastScheduled(broadcastScheduleTime: String) {
+        mainViewModel.broadcastScheduleTime = broadcastScheduleTime
+        sharedPreferences.edit().putString(KEY_BROADCAST_SCHEDULE_TIME, broadcastScheduleTime)
+            .apply()
+    }
+
     companion object {
         private const val SHARED_PREFERENCES = "io.github.garykam.clocker"
         private const val KEY_DATE = "key_date"
         private const val KEY_SCHEDULE = "key_schedule"
-        private const val KEY_BROADCAST_SCHEDULED = "key_broadcast_scheduled"
+        private const val KEY_BROADCAST_SCHEDULE_TIME = "key_broadcast_schedule_time"
     }
 }

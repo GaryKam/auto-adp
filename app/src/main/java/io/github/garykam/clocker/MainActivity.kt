@@ -62,6 +62,13 @@ class MainActivity : ComponentActivity() {
                             clockHelper.handleClockOption()
                         }
                     }
+
+                    Column(
+                        modifier = Modifier.weight(0.5f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        BroadcastScheduleText()
+                    }
                 }
             }
         }
@@ -84,8 +91,8 @@ class MainActivity : ComponentActivity() {
                     DropdownMenuItem(onClick = {
                         expandMenu = false
 
-                        val text = if (mainViewModel.isBroadcastScheduled) {
-                            clockHelper.setBroadcastScheduled(false)
+                        val text = if (mainViewModel.isBroadcastScheduled()) {
+                            clockHelper.setBroadcastScheduled("")
                             AlarmHelper.cancelBroadcast(this@MainActivity)
                             getString(R.string.auto_clock_out_canceled)
                         } else {
@@ -101,7 +108,7 @@ class MainActivity : ComponentActivity() {
                         expandMenu = false
                         startService(NotificationService.createStopServiceIntent(this@MainActivity))
                     }) {
-                        Text(text = "Clear Notification")
+                        Text(text = getString(R.string.clock_notification_clear))
                     }
                 }
             }
@@ -156,13 +163,26 @@ class MainActivity : ComponentActivity() {
                     enabled = false
                     Handler(Looper.getMainLooper()).postDelayed({ enabled = true }, 5000L)
                 },
-                enabled = enabled && !mainViewModel.isBroadcastScheduled
+                enabled = enabled && !mainViewModel.isBroadcastScheduled()
             ) {
                 Text(
                     text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
                     style = MaterialTheme.typography.button
                 )
             }
+        }
+    }
+
+    @Composable
+    private fun BroadcastScheduleText() {
+        if (mainViewModel.isBroadcastScheduled()) {
+            val date = SimpleDateFormat(
+                "EEE MMM dd HH:mm:ss zzz yyyy",
+                Locale.US
+            ).parse(mainViewModel.broadcastScheduleTime)!!
+            val formattedDate = SimpleDateFormat("h:mm a", Locale.US).format(date)
+
+            Text(text = getString(R.string.auto_clock_out_scheduled, formattedDate))
         }
     }
 }
