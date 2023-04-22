@@ -1,7 +1,9 @@
 package io.github.garykam.clocker
 
 import android.annotation.SuppressLint
+import android.content.IntentFilter
 import android.os.Bundle
+import android.provider.Telephony
 import android.util.Log
 import android.webkit.CookieManager
 import android.webkit.WebView
@@ -12,17 +14,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import java.lang.ref.WeakReference
 
 class AdpActivity : ComponentActivity() {
+    lateinit var job: Job
+        private set
+    private var page = Page.WELCOME
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         Log.d(Utils.TAG, "AdpActivity#onCreate")
+
+        registerReceiver(
+            SmsBroadcastReceiver(this),
+            IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)
+        )
+
         setShowWhenLocked(true)
         setTurnScreenOn(true)
 
@@ -37,8 +46,6 @@ class AdpActivity : ComponentActivity() {
     private fun AdpView() {
         AndroidView(factory = {
             WebView(this).apply {
-                var page = Page.WELCOME
-
                 loadUrl(ADP_URL)
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
@@ -53,12 +60,12 @@ class AdpActivity : ComponentActivity() {
                                     Page.WELCOME -> {
                                         Log.d(Utils.TAG, "AdpActivity#visitLoginPage")
                                         visitLoginPage()
-                                        page = Page.SIGN_IN
+                                        page = Page.LOGIN
                                     }
 
-                                    Page.SIGN_IN -> {
-                                        Log.d(Utils.TAG, "AdpActivity#loginWithCredentials")
-                                        loginWithCredentials()
+                                    Page.LOGIN -> {
+                                        Log.d(Utils.TAG, "AdpActivity#login")
+                                        login()
                                         page = Page.HOME
                                     }
 
@@ -95,7 +102,7 @@ class AdpActivity : ComponentActivity() {
         )
     }
 
-    private fun loginWithCredentials() {
+    private fun login() {
         CoroutineScope(Dispatchers.Main).launch {
             semaphore.acquire()
             Utils.waitUntil("document.getElementById('login-form_username')")
@@ -128,10 +135,62 @@ class AdpActivity : ComponentActivity() {
                         "signInButton.dispatchEvent(clickEvent);            " +
                         "}) ()"
             )
+
+            Log.d(Utils.TAG, "AdpActivity#requestSmsCode")
+            requestSmsCode()
+        }
+    }
+
+    private fun requestSmsCode() {
+        CoroutineScope(Dispatchers.Main).launch {
+            Utils.waitUntil("document.getElementsByClassName('vdl-list-button vdl-default actionable')[0]")
+
+            semaphore.acquire()
+            Utils.runJavascript(
+                "javascript: (function() {                                                                         " +
+                        "clickEvent = document.createEvent('HTMLEvents');                                          " +
+                        "clickEvent.initEvent('click', true, true);                                                " +
+                        "smsOption = document.getElementsByClassName('vdl-list-button vdl-default actionable')[0]; " +
+                        "smsOption.dispatchEvent(clickEvent);                                                      " +
+                        "}) ()"
+            )
+        }.also {
+            job = it
+        }
+    }
+
+    fun enterSmsCode(code: String) {
+        if (page != Page.HOME) {
+            return
+        }
+
+        CoroutineScope(Dispatchers.Main).launch {
+            Utils.waitUntil("document.getElementById('otpform')")
+
+            semaphore.acquire()
+            Utils.type(code)
+
+            semaphore.acquire()
+            Utils.waitUntil("document.getElementById('verifyOtpBtn')")
+
+            semaphore.acquire()
+            Utils.runJavascript(
+                "javascript: (function() {                                       " +
+                        "clickEvent = document.createEvent('HTMLEvents');        " +
+                        "clickEvent.initEvent('click', true, true);              " +
+                        "submitButton = document.getElementById('verifyOtpBtn'); " +
+                        "submitButton.dispatchEvent(clickEvent);                 " +
+                        "}) ()"
+            )
         }
     }
 
     private fun clockOut() {
+        if (job.isActive) {
+            Log.d(Utils.TAG, "Job#cancel")
+            job.cancel()
+        }
+
         CoroutineScope(Dispatchers.Main).launch {
             Utils.waitUntil("document.getElementById('chp-time-portlet-view-more-actions-btn')")
 
@@ -144,7 +203,7 @@ class AdpActivity : ComponentActivity() {
                         "actionsButton.scrollIntoView();                                                    " +
                         "actionsButton.dispatchEvent(clickEvent);                                           " +
                         "clockOutButton = document.getElementById('btn-id-more-actions-Clock Out');         " +
-                        //"clockOutButton.dispatchEvent(clickEvent);                                          " +
+                        "clockOutButton.dispatchEvent(clickEvent);                                          " +
                         "}) ()"
             )
 
@@ -161,6 +220,6 @@ class AdpActivity : ComponentActivity() {
         private const val USERNAME = "username"
         private const val PASSWORD = "password"
 
-        private enum class Page { WELCOME, SIGN_IN, HOME, OTHER }
+        private enum class Page { WELCOME, LOGIN, HOME, OTHER }
     }
 }

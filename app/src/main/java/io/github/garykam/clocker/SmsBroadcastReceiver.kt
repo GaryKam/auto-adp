@@ -7,7 +7,7 @@ import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
 
-class SmsBroadcastReceiver : BroadcastReceiver() {
+class SmsBroadcastReceiver(private val adpActivity: AdpActivity) : BroadcastReceiver() {
     private val regex = Regex("ADP:.+(?<code>\\d{6}).+")
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -19,7 +19,9 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
                 val code = regex.matchEntire(message.messageBody!!)?.groups?.get("code")
 
                 if (code != null) {
-                    Log.d(Utils.TAG, "code: ${code.value}")
+                    Log.d(Utils.TAG, "SmsBroadcastReceiver#enterSmsCode")
+                    adpActivity.enterSmsCode(code.value)
+                    break
                 }
             }
         }
