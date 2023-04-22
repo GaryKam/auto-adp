@@ -1,188 +1,167 @@
 package io.github.garykam.clocker
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.widget.Toast
+import android.util.Log
+import android.webkit.CookieManager
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import io.github.garykam.clocker.ui.theme.AppTheme
-import java.text.SimpleDateFormat
-import java.util.*
+import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import java.lang.ref.WeakReference
 
 class MainActivity : ComponentActivity() {
-    private val mainViewModel: MainViewModel by viewModels()
-    private lateinit var clockHelper: ClockHelper
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        clockHelper = ClockHelper(this, mainViewModel)
-        clockHelper.loadSchedule()
+        Log.d(TAG, "onCreate")
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
 
         setContent {
-            AppTheme {
-                TopAppBar()
-
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
-                        modifier = Modifier.weight(2f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ClockerTitle()
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        ClockerSchedule()
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        ClockerText(mainViewModel.clockOption)
-                        ClockerButton(mainViewModel.isClockedIn()) {
-                            clockHelper.handleClockOption()
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(0.5f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        BroadcastScheduleText()
-                    }
-                }
-            }
+            Log.d(TAG, "setContent")
+            AdpView()
         }
     }
 
     @Composable
-    private fun TopAppBar() {
-        var expandMenu by remember { mutableStateOf(false) }
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun AdpView() {
+        AndroidView(factory = {
+            WebView(this).apply {
+                var page = Page.WELCOME
 
-        TopAppBar(
-            title = { Text(text = getString(R.string.app_name)) },
-            actions = {
-                IconButton(onClick = { expandMenu = !expandMenu }) {
-                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "menu")
-                }
+                loadUrl(ADP_URL)
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
 
-                DropdownMenu(
-                    expanded = expandMenu,
-                    onDismissRequest = { expandMenu = false }) {
-                    DropdownMenuItem(onClick = {
-                        expandMenu = false
+                CookieManager.getInstance().removeAllCookies(null)
 
-                        val text = if (mainViewModel.isBroadcastScheduled()) {
-                            clockHelper.setBroadcastScheduled("")
-                            AlarmHelper.cancelBroadcast(this@MainActivity)
-                            getString(R.string.auto_clock_out_canceled)
-                        } else {
-                            getString(R.string.auto_clock_out_cancel_invalid)
-                        }
+                webViewClient = object : WebViewClient() {
+                    override fun onPageFinished(webView: WebView, url: String) {
+                        webView.postVisualStateCallback(0L, object : WebView.VisualStateCallback() {
+                            override fun onComplete(requestId: Long) {
+                                when (page) {
+                                    Page.WELCOME -> {
+                                        Log.d(TAG, "visitLoginPage")
+                                        visitLoginPage()
+                                        page = Page.SIGN_IN
+                                    }
 
-                        Toast.makeText(this@MainActivity, text, Toast.LENGTH_SHORT).show()
-                    }) {
-                        Text(text = getString(R.string.auto_clock_out_cancel))
+                                    Page.SIGN_IN -> {
+                                        Log.d(TAG, "loginWithCredentials")
+                                        loginWithCredentials()
+                                        page = Page.HOME
+                                    }
+
+                                    Page.HOME -> {
+                                        Log.d(TAG, "clockOut")
+                                        clockOut()
+                                        page = Page.OTHER
+                                    }
+
+                                    Page.OTHER -> {}
+                                }
+                            }
+                        })
                     }
-
-                    DropdownMenuItem(onClick = {
-                        expandMenu = false
-                        startService(NotificationService.createStopServiceIntent(this@MainActivity))
-                    }) {
-                        Text(text = getString(R.string.clock_notification_clear))
-                    }
                 }
+            }.also {
+                webView = WeakReference(it)
             }
+        }, modifier = Modifier.fillMaxSize())
+    }
+
+    private fun visitLoginPage() {
+        Utils.runJavascript(
+            "javascript: (function() {                                                         " +
+                    "clickEvent = document.createEvent('HTMLEvents');                          " +
+                    "clickEvent.initEvent('click', true, true);                                " +
+                    "dropdown = document.querySelector('div[class=\"select__trigger\"]');      " +
+                    "option = document.querySelector('span[data-value=\"anActiveEmployee\"]'); " +
+                    "nextButton = document.querySelector('button[id=\"next\"]');               " +
+                    "dropdown.dispatchEvent(clickEvent);                                       " +
+                    "option.dispatchEvent(clickEvent);                                         " +
+                    "nextButton.dispatchEvent(clickEvent);                                     " +
+                    "}) ()                                                                     "
         )
     }
 
-    @Composable
-    private fun ClockerTitle() {
-        Text(
-            text = getString(R.string.app_name).uppercase(),
-            style = MaterialTheme.typography.h2,
-        )
-    }
+    private fun loginWithCredentials() {
+        CoroutineScope(Dispatchers.Main).launch {
+            semaphore.acquire()
+            Utils.waitUntil("document.getElementById('login-form_username')")
 
-    @Composable
-    private fun ClockerSchedule() {
-        for ((name, time) in mainViewModel.clockTimes.filterNot { it.key == ClockOption.MORNING_OUT.name }) {
-            val text = "$name: " + if (time.isEmpty()) {
-                time
-            } else {
-                val date = SimpleDateFormat("HH:mm:ss.SSS", Locale.US).parse(time)!!
-                SimpleDateFormat("h:mm a", Locale.US).format(date)
-            }
+            semaphore.acquire()
+            Utils.type(USERNAME)
 
-            Text(
-                text = text,
-                style = MaterialTheme.typography.body1
+            semaphore.acquire()
+            webView.get()!!.requestFocus()
+            Utils.runJavascript(
+                "javascript: (function() {                                       " +
+                        "clickEvent = document.createEvent('HTMLEvents');        " +
+                        "clickEvent.initEvent('click', true, true);              " +
+                        "nextButton = document.getElementById('verifUseridBtn'); " +
+                        "nextButton.dispatchEvent(clickEvent);                   " +
+                        "}) ()"
+            )
+
+            Utils.waitUntil("document.getElementById('login-form_password')")
+
+            semaphore.acquire()
+            Utils.type(PASSWORD)
+
+            semaphore.acquire()
+            Utils.runJavascript(
+                "javascript: (function() {                                  " +
+                        "clickEvent = document.createEvent('HTMLEvents');   " +
+                        "clickEvent.initEvent('click', true, true);         " +
+                        "signInButton = document.getElementById('signBtn'); " +
+                        "signInButton.dispatchEvent(clickEvent);            " +
+                        "}) ()"
             )
         }
     }
 
-    @Composable
-    private fun ClockerText(clockOption: ClockOption) {
-        Text(
-            text = clockOption.getText(this),
-            style = MaterialTheme.typography.h5
-        )
-    }
+    private fun clockOut() {
+        CoroutineScope(Dispatchers.Main).launch {
+            Utils.waitUntil("document.getElementById('chp-time-portlet-view-more-actions-btn')")
 
-    @Composable
-    private fun ClockerButton(
-        clockedIn: Boolean,
-        onClockChange: () -> Unit
-    ) {
-        var enabled by remember { mutableStateOf(true) }
+            semaphore.acquire()
+            Utils.runJavascript(
+                "javascript: (function() {                                                                  " +
+                        "clickEvent = document.createEvent('HTMLEvents');                                   " +
+                        "clickEvent.initEvent('click', true, true);                                         " +
+                        "actionsButton = document.getElementById('chp-time-portlet-view-more-actions-btn'); " +
+                        "actionsButton.scrollIntoView();                                                    " +
+                        "actionsButton.dispatchEvent(clickEvent);                                           " +
+                        "clockOutButton = document.getElementById('btn-id-more-actions-Clock Out');         " +
+                        "clockOutButton.dispatchEvent(clickEvent);                                          " +
+                        "}) ()"
+            )
 
-        AnimatedVisibility(visible = !mainViewModel.isEndOfDay()) {
-            Button(
-                onClick = {
-                    onClockChange()
-
-                    enabled = false
-                    Handler(Looper.getMainLooper()).postDelayed({ enabled = true }, 5000L)
-                },
-                enabled = enabled && !mainViewModel.isBroadcastScheduled()
-            ) {
-                Text(
-                    text = if (clockedIn) getString(R.string.clock_out) else getString(R.string.clock_in),
-                    style = MaterialTheme.typography.button
-                )
-            }
+            Utils.playSound(applicationContext)
+            //finish()
         }
     }
 
-    @Composable
-    private fun BroadcastScheduleText() {
-        if (mainViewModel.isBroadcastScheduled()) {
-            val date = SimpleDateFormat(
-                "EEE MMM dd HH:mm:ss zzz yyyy",
-                Locale.US
-            ).parse(mainViewModel.broadcastScheduleTime)!!
-            val formattedDate = SimpleDateFormat("h:mm a", Locale.US).format(date)
+    companion object {
+        lateinit var webView: WeakReference<WebView>
+            private set
+        val semaphore = Semaphore(1)
+        private const val TAG = "Clocker"
+        private const val ADP_URL = "https://login.adp.com/welcome"
+        private const val USERNAME = "username"
+        private const val PASSWORD = "password"
 
-            Text(text = getString(R.string.auto_clock_out_scheduled, formattedDate))
-        }
+        private enum class Page { WELCOME, SIGN_IN, HOME, OTHER }
     }
 }
