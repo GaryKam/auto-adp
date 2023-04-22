@@ -1,19 +1,8 @@
 <resources>
-    <string name="app_name">Clocker</string>
-
-    <string name="clock_in">Clock-In</string>
-    <string name="clock_out">Clock-Out</string>
-
-    <string name="clock_out_morning">Good morning!</string>
-    <string name="clock_in_morning">Lunch time!</string>
-    <string name="clock_out_lunch">Back to work!</string>
-    <string name="clock_in_lunch">Done for the day!</string>
-    <string name="clock_out_evening">Have a good evening!</string>
-
-    <string name="auto_clock_out_cancel">Cancel Auto Clock-Out</string>
-    <string name="auto_clock_out_canceled">Canceled clock-out broadcast</string>
-    <string name="auto_clock_out_cancel_invalid">Clock-out broadcast is not scheduled</string>
-    <string name="auto_clock_out_scheduled">Auto clock-out scheduled for %s</string>
-
-    <string name="clock_notification_clear">Clear Notification</string>
+    <string name="app_name">Auto ADP</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="clock_out">Clock Out</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved credentials</string>
 </resources>

@@ -14,13 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
-import java.lang.ref.WeakReference
 
 class AdpActivity : ComponentActivity() {
-    lateinit var job: Job
-        private set
+    private lateinit var job: Job
     private var page = Page.WELCOME
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,7 +83,7 @@ class AdpActivity : ComponentActivity() {
                     }
                 }
             }.also {
-                webView = WeakReference(it)
+                Utils.setWebView(it)
             }
         }, modifier = Modifier.fillMaxSize())
     }
@@ -108,10 +109,9 @@ class AdpActivity : ComponentActivity() {
             Utils.waitUntil("document.getElementById('login-form_username')")
 
             semaphore.acquire()
-            Utils.type(USERNAME)
+            Utils.type(Utils.getUsername())
 
             semaphore.acquire()
-            webView.get()!!.requestFocus()
             Utils.runJavascript(
                 "javascript: (function() {                                       " +
                         "clickEvent = document.createEvent('HTMLEvents');        " +
@@ -124,7 +124,7 @@ class AdpActivity : ComponentActivity() {
             Utils.waitUntil("document.getElementById('login-form_password')")
 
             semaphore.acquire()
-            Utils.type(PASSWORD)
+            Utils.type(Utils.getPassword())
 
             semaphore.acquire()
             Utils.runJavascript(
@@ -207,18 +207,14 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
 
-            Utils.playSound(applicationContext)
+            Utils.playSound()
             //finish()
         }
     }
 
     companion object {
-        lateinit var webView: WeakReference<WebView>
-            private set
         val semaphore = Semaphore(1)
         private const val ADP_URL = "https://login.adp.com/welcome"
-        private const val USERNAME = "username"
-        private const val PASSWORD = "password"
 
         private enum class Page { WELCOME, LOGIN, HOME, OTHER }
     }
