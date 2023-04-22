@@ -7,22 +7,23 @@ import android.os.Looper
 import android.view.KeyCharacterMap
 
 object Utils {
+    const val TAG = "ClockerApp"
     private val keyMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
 
     fun runJavascript(javascript: String) {
         Handler(Looper.getMainLooper()).postDelayed({
-            MainActivity.webView.get()!!.loadUrl(javascript)
+            AdpActivity.webView.get()!!.loadUrl(javascript)
         }, 500L)
     }
 
     fun waitUntil(javascript: String) {
         Handler(Looper.getMainLooper()).post {
-            MainActivity.webView.get()!!.evaluateJavascript(javascript) { value ->
+            AdpActivity.webView.get()!!.evaluateJavascript(javascript) { value ->
                 if (value.equals("null")) {
                     Thread.sleep(250L)
                     waitUntil(javascript)
                 } else {
-                    MainActivity.semaphore.release()
+                    AdpActivity.semaphore.release()
                 }
             }
         }
@@ -30,10 +31,10 @@ object Utils {
 
     fun type(text: String) {
         keyMap.getEvents(text.toCharArray()).forEach {
-            MainActivity.webView.get()!!.dispatchKeyEvent(it)
+            AdpActivity.webView.get()!!.dispatchKeyEvent(it)
         }
 
-        MainActivity.semaphore.release()
+        AdpActivity.semaphore.release()
     }
 
     fun playSound(context: Context) {
