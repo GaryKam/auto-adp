@@ -5,6 +5,7 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.provider.Telephony
 import android.util.Log
+import android.view.WindowManager
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -28,13 +29,15 @@ class AdpActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d(Utils.TAG, "AdpActivity#onCreate")
 
+        Utils.setContext(applicationContext)
+
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+
         registerReceiver(
             SmsBroadcastReceiver(this),
             IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)
         )
-
-        setShowWhenLocked(true)
-        setTurnScreenOn(true)
 
         setContent {
             Log.d(Utils.TAG, "AdpActivity#setContent")
@@ -203,7 +206,7 @@ class AdpActivity : ComponentActivity() {
                         "actionsButton.scrollIntoView();                                                    " +
                         "actionsButton.dispatchEvent(clickEvent);                                           " +
                         "clockOutButton = document.getElementById('btn-id-more-actions-Clock Out');         " +
-                        "clockOutButton.dispatchEvent(clickEvent);                                          " +
+                        //"clockOutButton.dispatchEvent(clickEvent);                                          " +
                         "}) ()"
             )
 

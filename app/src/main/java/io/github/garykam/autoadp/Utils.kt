@@ -10,11 +10,12 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import java.lang.ref.WeakReference
 
-
 object Utils {
     const val TAG = "ClockerApp"
     private val keyMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
     private val masterKey = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+    private lateinit var context: WeakReference<Context>
+    private lateinit var webView: WeakReference<WebView>
     private val sharedPreferences by lazy {
         EncryptedSharedPreferences.create(
             "secret_shared_prefs",
@@ -24,8 +25,6 @@ object Utils {
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
     }
-    private lateinit var context: WeakReference<Context>
-    private lateinit var webView: WeakReference<WebView>
 
     fun runJavascript(javascript: String) {
         Handler(Looper.getMainLooper()).postDelayed({

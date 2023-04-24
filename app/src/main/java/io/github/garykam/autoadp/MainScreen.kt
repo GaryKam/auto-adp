@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 
 @Composable
-fun MainScreen(onClockOut: () -> Unit, onSave: (String, String) -> Unit) {
+fun MainScreen(onClockOut: () -> Unit, onSave: (String, String) -> Unit, scheduleClockOut: () -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -55,6 +55,10 @@ fun MainScreen(onClockOut: () -> Unit, onSave: (String, String) -> Unit) {
 
                 Button(onClick = onClockOut) {
                     Text(text = stringResource(id = R.string.clock_out))
+                }
+
+                Button(onClick = scheduleClockOut) {
+                    Text(text = "Schedule Clock Out")
                 }
             }
         }
