@@ -1,11 +1,13 @@
-package io.github.garykam.clocker
+package io.github.garykam.autoadp
 
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
+import io.github.garykam.autoadp.utils.Utils
 
 class SmsBroadcastReceiver(private val adpActivity: AdpActivity) : BroadcastReceiver() {
     private val regex = Regex("ADP:.+(?<code>\\d{6}).+")
@@ -24,6 +26,17 @@ class SmsBroadcastReceiver(private val adpActivity: AdpActivity) : BroadcastRece
                     break
                 }
             }
+        }
+    }
+
+    companion object {
+        fun intent(context: Context): PendingIntent {
+            return PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(context, AlarmBroadcastReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
         }
     }
 }

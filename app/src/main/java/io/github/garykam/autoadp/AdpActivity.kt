@@ -1,20 +1,18 @@
-package io.github.garykam.clocker
+package io.github.garykam.autoadp
 
-import android.annotation.SuppressLint
 import android.content.IntentFilter
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.provider.Telephony
 import android.util.Log
-import android.view.WindowManager
-import android.webkit.CookieManager
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.AndroidView
+import io.github.garykam.autoadp.screens.AdpScreen
+import io.github.garykam.autoadp.utils.Utils
+import io.github.garykam.autoadp.utils.runJavascript
+import io.github.garykam.autoadp.utils.type
+import io.github.garykam.autoadp.utils.waitUntil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,14 +20,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 
 class AdpActivity : ComponentActivity() {
-    private lateinit var job: Job
     private var page = Page.WELCOME
+    private lateinit var job: Job
+    private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(Utils.TAG, "AdpActivity#onCreate")
 
-        Utils.setContext(applicationContext)
+        Utils.initSharedPreferences(applicationContext)
+        webView = WebView(this)
 
         setShowWhenLocked(true)
         setTurnScreenOn(true)
@@ -41,58 +41,34 @@ class AdpActivity : ComponentActivity() {
 
         setContent {
             Log.d(Utils.TAG, "AdpActivity#setContent")
-            AdpView()
+            AdpScreen(webView = webView, onPageLoad = {
+                when (page) {
+                    Page.WELCOME -> {
+                        Log.d(Utils.TAG, "AdpActivity#visitLoginPage")
+                        visitLoginPage()
+                        page = Page.LOGIN
+                    }
+
+                    Page.LOGIN -> {
+                        Log.d(Utils.TAG, "AdpActivity#login")
+                        login()
+                        page = Page.HOME
+                    }
+
+                    Page.HOME -> {
+                        Log.d(Utils.TAG, "AdpActivity#clockOut")
+                        clockOut()
+                        page = Page.OTHER
+                    }
+
+                    Page.OTHER -> {}
+                }
+            })
         }
     }
 
-    @Composable
-    @SuppressLint("SetJavaScriptEnabled")
-    private fun AdpView() {
-        AndroidView(factory = {
-            WebView(this).apply {
-                loadUrl(ADP_URL)
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-
-                CookieManager.getInstance().removeAllCookies(null)
-
-                webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(webView: WebView, url: String) {
-                        webView.postVisualStateCallback(0L, object : WebView.VisualStateCallback() {
-                            override fun onComplete(requestId: Long) {
-                                when (page) {
-                                    Page.WELCOME -> {
-                                        Log.d(Utils.TAG, "AdpActivity#visitLoginPage")
-                                        visitLoginPage()
-                                        page = Page.LOGIN
-                                    }
-
-                                    Page.LOGIN -> {
-                                        Log.d(Utils.TAG, "AdpActivity#login")
-                                        login()
-                                        page = Page.HOME
-                                    }
-
-                                    Page.HOME -> {
-                                        Log.d(Utils.TAG, "AdpActivity#clockOut")
-                                        clockOut()
-                                        page = Page.OTHER
-                                    }
-
-                                    Page.OTHER -> {}
-                                }
-                            }
-                        })
-                    }
-                }
-            }.also {
-                Utils.setWebView(it)
-            }
-        }, modifier = Modifier.fillMaxSize())
-    }
-
     private fun visitLoginPage() {
-        Utils.runJavascript(
+        webView.runJavascript(
             "javascript: (function() {                                                         " +
                     "clickEvent = document.createEvent('HTMLEvents');                          " +
                     "clickEvent.initEvent('click', true, true);                                " +
@@ -109,13 +85,13 @@ class AdpActivity : ComponentActivity() {
     private fun login() {
         CoroutineScope(Dispatchers.Main).launch {
             semaphore.acquire()
-            Utils.waitUntil("document.getElementById('login-form_username')")
+            webView.waitUntil("document.getElementById('login-form_username')")
 
             semaphore.acquire()
-            Utils.type(Utils.getUsername())
+            webView.type(Utils.getUsername())
 
             semaphore.acquire()
-            Utils.runJavascript(
+            webView.runJavascript(
                 "javascript: (function() {                                       " +
                         "clickEvent = document.createEvent('HTMLEvents');        " +
                         "clickEvent.initEvent('click', true, true);              " +
@@ -124,13 +100,13 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
 
-            Utils.waitUntil("document.getElementById('login-form_password')")
+            webView.waitUntil("document.getElementById('login-form_password')")
 
             semaphore.acquire()
-            Utils.type(Utils.getPassword())
+            webView.type(Utils.getPassword())
 
             semaphore.acquire()
-            Utils.runJavascript(
+            webView.runJavascript(
                 "javascript: (function() {                                  " +
                         "clickEvent = document.createEvent('HTMLEvents');   " +
                         "clickEvent.initEvent('click', true, true);         " +
@@ -146,10 +122,10 @@ class AdpActivity : ComponentActivity() {
 
     private fun requestSmsCode() {
         CoroutineScope(Dispatchers.Main).launch {
-            Utils.waitUntil("document.getElementsByClassName('vdl-list-button vdl-default actionable')[0]")
+            webView.waitUntil("document.getElementsByClassName('vdl-list-button vdl-default actionable')[0]")
 
             semaphore.acquire()
-            Utils.runJavascript(
+            webView.runJavascript(
                 "javascript: (function() {                                                                         " +
                         "clickEvent = document.createEvent('HTMLEvents');                                          " +
                         "clickEvent.initEvent('click', true, true);                                                " +
@@ -168,16 +144,16 @@ class AdpActivity : ComponentActivity() {
         }
 
         CoroutineScope(Dispatchers.Main).launch {
-            Utils.waitUntil("document.getElementById('otpform')")
+            webView.waitUntil("document.getElementById('otpform')")
 
             semaphore.acquire()
-            Utils.type(code)
+            webView.type(code)
 
             semaphore.acquire()
-            Utils.waitUntil("document.getElementById('verifyOtpBtn')")
+            webView.waitUntil("document.getElementById('verifyOtpBtn')")
 
             semaphore.acquire()
-            Utils.runJavascript(
+            webView.runJavascript(
                 "javascript: (function() {                                       " +
                         "clickEvent = document.createEvent('HTMLEvents');        " +
                         "clickEvent.initEvent('click', true, true);              " +
@@ -195,10 +171,10 @@ class AdpActivity : ComponentActivity() {
         }
 
         CoroutineScope(Dispatchers.Main).launch {
-            Utils.waitUntil("document.getElementById('chp-time-portlet-view-more-actions-btn')")
+            webView.waitUntil("document.getElementById('chp-time-portlet-view-more-actions-btn')")
 
             semaphore.acquire()
-            Utils.runJavascript(
+            webView.runJavascript(
                 "javascript: (function() {                                                                  " +
                         "clickEvent = document.createEvent('HTMLEvents');                                   " +
                         "clickEvent.initEvent('click', true, true);                                         " +
@@ -210,14 +186,13 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
 
-            Utils.playSound()
+            MediaPlayer.create(this@AdpActivity, R.raw.success).start()
             //finish()
         }
     }
 
     companion object {
         val semaphore = Semaphore(1)
-        private const val ADP_URL = "https://login.adp.com/welcome"
 
         private enum class Page { WELCOME, LOGIN, HOME, OTHER }
     }

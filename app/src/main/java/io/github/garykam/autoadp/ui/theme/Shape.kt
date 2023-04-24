@@ -1,4 +1,4 @@
-package io.github.garykam.clocker.ui.theme
+package io.github.garykam.autoadp.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

@@ -1,4 +1,4 @@
-package io.github.garykam.clocker
+package io.github.garykam.autoadp
 
 import org.junit.Test
 

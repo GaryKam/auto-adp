@@ -1,4 +1,4 @@
-package io.github.garykam.clocker
+package io.github.garykam.autoadp
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

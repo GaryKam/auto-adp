@@ -1,4 +1,4 @@
-package io.github.garykam.clocker.ui.theme
+package io.github.garykam.autoadp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

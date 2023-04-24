@@ -1,5 +1,6 @@
-package io.github.garykam.clocker
+package io.github.garykam.autoadp.screens
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,11 +11,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import io.github.garykam.autoadp.R
+import io.github.garykam.autoadp.utils.Utils
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun MainScreen(onClockOut: () -> Unit, onSave: (String, String) -> Unit, scheduleClockOut: () -> Unit) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun MainScreen(onSave: (String, String) -> Unit) {
+    var username by remember { mutableStateOf(Utils.getUsername()) }
+    var password by remember { mutableStateOf(Utils.getPassword()) }
 
     Scaffold(
         topBar = {
@@ -38,28 +44,29 @@ fun MainScreen(onClockOut: () -> Unit, onSave: (String, String) -> Unit, schedul
                     }
                 })
         },
-        content = { padding ->
+        content = {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
+                    .padding(vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                OutlinedTextField(value = username, onValueChange = {
-                    username = it
-                }, label = { Text(text = stringResource(id = R.string.username)) })
+                OutlinedTextField(value = username,
+                    onValueChange = {
+                        username = it
+                    },
+                    modifier = Modifier.padding(vertical = 5.dp),
+                    label = { Text(text = stringResource(id = R.string.username)) })
 
-                OutlinedTextField(value = password, onValueChange = {
-                    password = it
-                }, label = { Text(text = stringResource(id = R.string.password)) })
-
-                Button(onClick = onClockOut) {
-                    Text(text = stringResource(id = R.string.clock_out))
-                }
-
-                Button(onClick = scheduleClockOut) {
-                    Text(text = "Schedule Clock Out")
-                }
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                    },
+                    modifier = Modifier.padding(vertical = 5.dp),
+                    label = { Text(text = stringResource(id = R.string.password)) },
+                    visualTransformation = PasswordVisualTransformation()
+                )
             }
         }
     )

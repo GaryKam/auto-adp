@@ -1,27 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="io.github.garykam.clocker">
+    package="io.github.garykam.autoadp">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
         android:hardwareAccelerated="true"
-        android:allowBackup="false"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="false"
-        android:theme="@style/Theme.Clocker"
-        tools:targetApi="31">
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Clocker">
+
+        <receiver
+            android:name=".AlarmBroadcastReceiver"
+            android:exported="true"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true" />
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true"
             android:theme="@style/Theme.Clocker">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -31,9 +38,10 @@
 
         <activity
             android:name=".AdpActivity"
+            android:enabled="true"
             android:exported="false"
+            android:showOnLockScreen="true"
+            android:showWhenLocked="true"
             android:theme="@style/Theme.Clocker" />
-
     </application>
-
 </manifest>
