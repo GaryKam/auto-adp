@@ -6,7 +6,7 @@ import io.github.garykam.autoadp.utils.Utils
 import java.text.SimpleDateFormat
 import java.util.*
 
-class HomeViewModel : ViewModel() {
+class MainViewModel : ViewModel() {
     private var username = mutableStateOf(Utils.getUsername())
     private var password = mutableStateOf(Utils.getPassword())
     private var time = mutableStateOf(Utils.getTime())
@@ -19,14 +19,16 @@ class HomeViewModel : ViewModel() {
 
     fun getMinute() = time.value.split(':')[1].toInt()
 
-    fun getTime(): String {
-        val dateFormat = SimpleDateFormat("h:mm a", Locale.US)
-        val calendar = Calendar.getInstance().apply {
+    fun getTime(): Long {
+        with (Calendar.getInstance()) {
             set(Calendar.HOUR_OF_DAY, getHour())
             set(Calendar.MINUTE, getMinute())
+            return timeInMillis
         }
+    }
 
-        return dateFormat.format(calendar.time)
+    fun getDisplayTime(): String {
+        return SimpleDateFormat("h:mm a", Locale.US).format(Date(getTime()))
     }
 
     fun setUsername(_username: String) {

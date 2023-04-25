@@ -27,7 +27,7 @@ object Utils {
 
     fun getPassword() = encryptedSharedPreferences.getString("password", "")!!
 
-    fun getTime() = sharedPreferences.getString("time", "")!!
+    fun getTime() = sharedPreferences.getString("time", "17:00")!!
 
     fun saveCredentials(username: String, password: String) {
         with(encryptedSharedPreferences.edit()) {

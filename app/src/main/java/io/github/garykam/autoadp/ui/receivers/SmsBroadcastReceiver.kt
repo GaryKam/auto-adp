@@ -31,12 +31,12 @@ class SmsBroadcastReceiver(private val adpActivity: AdpActivity) : BroadcastRece
     }
 
     companion object {
-        fun intent(context: Context): PendingIntent {
+        fun newIntent(context: Context): PendingIntent {
             return PendingIntent.getBroadcast(
                 context,
                 0,
                 Intent(context, AlarmBroadcastReceiver::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                PendingIntent.FLAG_IMMUTABLE
             )
         }
     }

@@ -17,14 +17,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.garykam.autoadp.R
-import io.github.garykam.autoadp.ui.home.HomeViewModel
+import io.github.garykam.autoadp.ui.home.MainViewModel
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun MainScreen(
     onSaveCredentials: () -> Unit,
-    onScheduleClockOut: () -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    onScheduleClockOut: (Long) -> Unit,
+    viewModel: MainViewModel = viewModel()
 ) {
     Scaffold(
         topBar = {
@@ -76,10 +76,12 @@ fun MainScreen(
                 OutlinedButton(modifier = Modifier.padding(40.dp), onClick = {
                     timePickerDialog.show()
                 }) {
-                    Text(text = viewModel.getTime())
+                    Text(text = viewModel.getDisplayTime())
                 }
 
-                Button(onClick = onScheduleClockOut) {
+                Button(onClick = {
+                    onScheduleClockOut(viewModel.getTime())
+                }) {
                     Text(text = stringResource(id = R.string.schedule_clock_out))
                 }
             }
