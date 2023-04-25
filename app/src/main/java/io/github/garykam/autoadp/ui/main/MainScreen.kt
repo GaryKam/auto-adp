@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.screens
+package io.github.garykam.autoadp.ui.main
 
 import android.annotation.SuppressLint
 import android.app.TimePickerDialog
@@ -17,7 +17,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.garykam.autoadp.R
-import io.github.garykam.autoadp.ui.home.MainViewModel
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable

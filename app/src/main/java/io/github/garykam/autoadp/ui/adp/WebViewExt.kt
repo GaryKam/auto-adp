@@ -1,10 +1,9 @@
-package io.github.garykam.autoadp.utils
+package io.github.garykam.autoadp.ui.adp
 
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyCharacterMap
 import android.webkit.WebView
-import io.github.garykam.autoadp.ui.adp.AdpActivity
 
 private val keyMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
 

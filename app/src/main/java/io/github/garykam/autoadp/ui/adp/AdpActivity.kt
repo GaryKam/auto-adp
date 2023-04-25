@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui
+package io.github.garykam.autoadp.ui.adp
 
 import android.content.IntentFilter
 import android.media.MediaPlayer
@@ -10,7 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import io.github.garykam.autoadp.R
 import io.github.garykam.autoadp.receivers.SmsBroadcastReceiver
-import io.github.garykam.autoadp.ui.screens.AdpScreen
 import io.github.garykam.autoadp.utils.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,9 +24,9 @@ class AdpActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d(Utils.TAG, "AdpActivity#onCreate")
+        Log.d(PreferencesUtil.TAG, "AdpActivity#onCreate")
 
-        Utils.initSharedPreferences(applicationContext)
+        PreferencesUtil.initSharedPreferences(applicationContext)
         webView = WebView(this)
 
         setShowWhenLocked(true)
@@ -39,23 +38,23 @@ class AdpActivity : ComponentActivity() {
         )
 
         setContent {
-            Log.d(Utils.TAG, "AdpActivity#setContent")
+            Log.d(PreferencesUtil.TAG, "AdpActivity#setContent")
             AdpScreen(webView = webView, onPageLoad = {
                 when (page) {
                     Page.WELCOME -> {
-                        Log.d(Utils.TAG, "AdpActivity#visitLoginPage")
+                        Log.d(PreferencesUtil.TAG, "AdpActivity#visitLoginPage")
                         visitLoginPage()
                         page = Page.LOGIN
                     }
 
                     Page.LOGIN -> {
-                        Log.d(Utils.TAG, "AdpActivity#login")
+                        Log.d(PreferencesUtil.TAG, "AdpActivity#login")
                         login()
                         page = Page.HOME
                     }
 
                     Page.HOME -> {
-                        Log.d(Utils.TAG, "AdpActivity#clockOut")
+                        Log.d(PreferencesUtil.TAG, "AdpActivity#clockOut")
                         clockOut()
                         page = Page.OTHER
                     }
@@ -84,10 +83,10 @@ class AdpActivity : ComponentActivity() {
     private fun login() {
         CoroutineScope(Dispatchers.Main).launch {
             wait()
-            webView.locateById("document.getElementById('login-form_username')")
+            webView.locateById("login-form_username")
 
             wait()
-            webView.type(Utils.getUsername())
+            webView.type(PreferencesUtil.getUsername())
 
             wait()
             webView.runJavascript(
@@ -99,10 +98,10 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
 
-            webView.locateById("document.getElementById('login-form_password')")
+            webView.locateById("login-form_password")
 
             wait()
-            webView.type(Utils.getPassword())
+            webView.type(PreferencesUtil.getPassword())
 
             wait()
             webView.runJavascript(
@@ -114,14 +113,14 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
 
-            Log.d(Utils.TAG, "AdpActivity#requestSmsCode")
+            Log.d(PreferencesUtil.TAG, "AdpActivity#requestSmsCode")
             requestSmsCode()
         }
     }
 
     private fun requestSmsCode() {
         CoroutineScope(Dispatchers.Main).launch {
-            webView.locateByClass("document.getElementsByClassName('vdl-list-button vdl-default actionable')[0]")
+            webView.locateByClass("vdl-list-button vdl-default actionable")
 
             wait()
             webView.runJavascript(
@@ -143,13 +142,13 @@ class AdpActivity : ComponentActivity() {
         }
 
         CoroutineScope(Dispatchers.Main).launch {
-            webView.locateById("document.getElementById('otpform')")
+            webView.locateById("otpform")
 
             wait()
             webView.type(code)
 
             wait()
-            webView.locateById("document.getElementById('verifyOtpBtn')")
+            webView.locateById("verifyOtpBtn")
 
             wait()
             webView.runJavascript(
@@ -165,7 +164,7 @@ class AdpActivity : ComponentActivity() {
 
     private fun clockOut() {
         if (smsJob.isActive) {
-            Log.d(Utils.TAG, "Job#cancel")
+            Log.d(PreferencesUtil.TAG, "Job#cancel")
             smsJob.cancel()
         }
 
@@ -181,12 +180,12 @@ class AdpActivity : ComponentActivity() {
                         "actionsButton.scrollIntoView();                                                    " +
                         "actionsButton.dispatchEvent(clickEvent);                                           " +
                         "clockOutButton = document.getElementById('btn-id-more-actions-Clock Out');         " +
-                        //"clockOutButton.dispatchEvent(clickEvent);                                          " +
+                        "clockOutButton.dispatchEvent(clickEvent);                                          " +
                         "}) ()"
             )
 
             MediaPlayer.create(this@AdpActivity, R.raw.success).start()
-            //finish()
+            NotificationUtil.clearNotification(this@AdpActivity)
         }
     }
 

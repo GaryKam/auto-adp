@@ -1,15 +1,15 @@
-package io.github.garykam.autoadp.ui.home
+package io.github.garykam.autoadp.ui.main
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import io.github.garykam.autoadp.utils.Utils
+import io.github.garykam.autoadp.utils.PreferencesUtil
 import java.text.SimpleDateFormat
 import java.util.*
 
 class MainViewModel : ViewModel() {
-    private var username = mutableStateOf(Utils.getUsername())
-    private var password = mutableStateOf(Utils.getPassword())
-    private var time = mutableStateOf(Utils.getTime())
+    private var username = mutableStateOf(PreferencesUtil.getUsername())
+    private var password = mutableStateOf(PreferencesUtil.getPassword())
+    private var time = mutableStateOf(PreferencesUtil.getTime())
 
     fun getUsername() = username.value
 
@@ -40,11 +40,11 @@ class MainViewModel : ViewModel() {
     }
 
     fun saveCredentials() {
-        Utils.saveCredentials(username.value, password.value)
+        PreferencesUtil.saveCredentials(username.value, password.value)
     }
 
     fun saveTime(_time: String) {
         time.value = _time
-        Utils.saveTime(_time)
+        PreferencesUtil.saveTime(_time)
     }
 }

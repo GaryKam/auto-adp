@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.receivers
+package io.github.garykam.autoadp.receivers
 
 import android.app.Activity
 import android.app.PendingIntent
@@ -7,14 +7,14 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
-import io.github.garykam.autoadp.ui.AdpActivity
-import io.github.garykam.autoadp.utils.Utils
+import io.github.garykam.autoadp.ui.adp.AdpActivity
+import io.github.garykam.autoadp.utils.PreferencesUtil
 
 class SmsBroadcastReceiver(private val adpActivity: AdpActivity) : BroadcastReceiver() {
     private val regex = Regex("ADP:.+(?<code>\\d{6}).+")
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d(Utils.TAG, "SmsBroadcastReceiver#onReceive")
+        Log.d(PreferencesUtil.TAG, "SmsBroadcastReceiver#onReceive")
         if (resultCode == Activity.RESULT_OK) {
             val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
 
@@ -22,7 +22,7 @@ class SmsBroadcastReceiver(private val adpActivity: AdpActivity) : BroadcastRece
                 val code = regex.matchEntire(message.messageBody!!)?.groups?.get("code")
 
                 if (code != null) {
-                    Log.d(Utils.TAG, "SmsBroadcastReceiver#enterSmsCode")
+                    Log.d(PreferencesUtil.TAG, "SmsBroadcastReceiver#enterSmsCode")
                     adpActivity.enterSmsCode(code.value)
                     break
                 }

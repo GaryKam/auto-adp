@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.home
+package io.github.garykam.autoadp.ui.main
 
 import android.Manifest
 import android.app.AlarmManager
@@ -12,21 +12,22 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.github.garykam.autoadp.R
 import io.github.garykam.autoadp.receivers.SmsBroadcastReceiver
-import io.github.garykam.autoadp.ui.screens.MainScreen
-import io.github.garykam.autoadp.utils.Utils
+import io.github.garykam.autoadp.utils.NotificationUtil
+import io.github.garykam.autoadp.utils.PreferencesUtil
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Utils.initSharedPreferences(applicationContext)
+        NotificationUtil.initNotificationChannel(applicationContext)
+        PreferencesUtil.initSharedPreferences(applicationContext)
 
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.RECEIVE_SMS
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.d(Utils.TAG, "MainActivity#requestPermission")
+            Log.d(PreferencesUtil.TAG, "MainActivity#requestPermission")
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECEIVE_SMS), 0)
         }
 

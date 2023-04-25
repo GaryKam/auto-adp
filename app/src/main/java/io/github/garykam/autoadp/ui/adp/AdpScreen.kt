@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.screens
+package io.github.garykam.autoadp.ui.adp
 
 import android.annotation.SuppressLint
 import android.webkit.CookieManager
