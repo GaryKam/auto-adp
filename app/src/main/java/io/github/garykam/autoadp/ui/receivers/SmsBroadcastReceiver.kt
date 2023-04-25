@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp
+package io.github.garykam.autoadp.ui.receivers
 
 import android.app.Activity
 import android.app.PendingIntent
@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
+import io.github.garykam.autoadp.ui.AdpActivity
 import io.github.garykam.autoadp.utils.Utils
 
 class SmsBroadcastReceiver(private val adpActivity: AdpActivity) : BroadcastReceiver() {

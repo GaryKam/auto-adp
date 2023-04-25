@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp
+package io.github.garykam.autoadp.ui.receivers
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import io.github.garykam.autoadp.R
+import io.github.garykam.autoadp.ui.AdpActivity
 import io.github.garykam.autoadp.utils.Utils
 import java.util.*
 
@@ -24,7 +26,7 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
         val builder = NotificationCompat.Builder(context, AUTO_ADP_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_background)
             .setContentTitle(context.getString(R.string.app_name))
-            .setContentText(context.getString(R.string.clock_out))
+            .setContentText(context.getString(R.string.auto_clock_out))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setContentIntent(fullScreenPendingIntent)
             .setFullScreenIntent(fullScreenPendingIntent, true)

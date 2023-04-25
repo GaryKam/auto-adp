@@ -4,7 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.KeyCharacterMap
 import android.webkit.WebView
-import io.github.garykam.autoadp.AdpActivity
+import io.github.garykam.autoadp.ui.AdpActivity
 
 private val keyMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
 
@@ -14,12 +14,25 @@ fun WebView.runJavascript(javascript: String) {
     }, 500L)
 }
 
-fun WebView.waitUntil(javascript: String) {
+fun WebView.locateById(id: String) {
     Handler(Looper.getMainLooper()).post {
-        evaluateJavascript(javascript) { value ->
+        evaluateJavascript("document.getElementById('$id')") { value ->
             if (value.equals("null")) {
                 Thread.sleep(250L)
-                waitUntil(javascript)
+                locateById(id)
+            } else {
+                AdpActivity.semaphore.release()
+            }
+        }
+    }
+}
+
+fun WebView.locateByClass(className: String) {
+    Handler(Looper.getMainLooper()).post {
+        evaluateJavascript("document.getElementsByClassName('$className')[0]") { value ->
+            if (value.equals("null")) {
+                Thread.sleep(250L)
+                locateByClass(className)
             } else {
                 AdpActivity.semaphore.release()
             }
@@ -34,4 +47,3 @@ fun WebView.type(text: String) {
 
     AdpActivity.semaphore.release()
 }
-

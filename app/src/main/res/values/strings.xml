@@ -2,7 +2,9 @@
     <string name="app_name">Auto ADP</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
-    <string name="clock_out">Click to automatically clock out!</string>
+    <string name="schedule_clock_out">Schedule Clock Out</string>
+    <string name="scheduled_clock_out">Scheduled to automatically clock out</string>
+    <string name="auto_clock_out">Click to automatically clock out!</string>
     <string name="auto_clock">Auto Clocker</string>
     <string name="save">Save</string>
     <string name="saved">Saved credentials</string>

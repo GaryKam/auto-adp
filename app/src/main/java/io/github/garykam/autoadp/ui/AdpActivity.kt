@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp
+package io.github.garykam.autoadp.ui
 
 import android.content.IntentFilter
 import android.media.MediaPlayer
@@ -8,11 +8,10 @@ import android.util.Log
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import io.github.garykam.autoadp.screens.AdpScreen
-import io.github.garykam.autoadp.utils.Utils
-import io.github.garykam.autoadp.utils.runJavascript
-import io.github.garykam.autoadp.utils.type
-import io.github.garykam.autoadp.utils.waitUntil
+import io.github.garykam.autoadp.R
+import io.github.garykam.autoadp.ui.receivers.SmsBroadcastReceiver
+import io.github.garykam.autoadp.ui.screens.AdpScreen
+import io.github.garykam.autoadp.utils.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,7 +20,7 @@ import kotlinx.coroutines.sync.Semaphore
 
 class AdpActivity : ComponentActivity() {
     private var page = Page.WELCOME
-    private lateinit var job: Job
+    private lateinit var smsJob: Job
     private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,13 +83,13 @@ class AdpActivity : ComponentActivity() {
 
     private fun login() {
         CoroutineScope(Dispatchers.Main).launch {
-            semaphore.acquire()
-            webView.waitUntil("document.getElementById('login-form_username')")
+            wait()
+            webView.locateById("document.getElementById('login-form_username')")
 
-            semaphore.acquire()
+            wait()
             webView.type(Utils.getUsername())
 
-            semaphore.acquire()
+            wait()
             webView.runJavascript(
                 "javascript: (function() {                                       " +
                         "clickEvent = document.createEvent('HTMLEvents');        " +
@@ -100,12 +99,12 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
 
-            webView.waitUntil("document.getElementById('login-form_password')")
+            webView.locateById("document.getElementById('login-form_password')")
 
-            semaphore.acquire()
+            wait()
             webView.type(Utils.getPassword())
 
-            semaphore.acquire()
+            wait()
             webView.runJavascript(
                 "javascript: (function() {                                  " +
                         "clickEvent = document.createEvent('HTMLEvents');   " +
@@ -122,9 +121,9 @@ class AdpActivity : ComponentActivity() {
 
     private fun requestSmsCode() {
         CoroutineScope(Dispatchers.Main).launch {
-            webView.waitUntil("document.getElementsByClassName('vdl-list-button vdl-default actionable')[0]")
+            webView.locateByClass("document.getElementsByClassName('vdl-list-button vdl-default actionable')[0]")
 
-            semaphore.acquire()
+            wait()
             webView.runJavascript(
                 "javascript: (function() {                                                                         " +
                         "clickEvent = document.createEvent('HTMLEvents');                                          " +
@@ -134,7 +133,7 @@ class AdpActivity : ComponentActivity() {
                         "}) ()"
             )
         }.also {
-            job = it
+            smsJob = it
         }
     }
 
@@ -144,15 +143,15 @@ class AdpActivity : ComponentActivity() {
         }
 
         CoroutineScope(Dispatchers.Main).launch {
-            webView.waitUntil("document.getElementById('otpform')")
+            webView.locateById("document.getElementById('otpform')")
 
-            semaphore.acquire()
+            wait()
             webView.type(code)
 
-            semaphore.acquire()
-            webView.waitUntil("document.getElementById('verifyOtpBtn')")
+            wait()
+            webView.locateById("document.getElementById('verifyOtpBtn')")
 
-            semaphore.acquire()
+            wait()
             webView.runJavascript(
                 "javascript: (function() {                                       " +
                         "clickEvent = document.createEvent('HTMLEvents');        " +
@@ -165,15 +164,15 @@ class AdpActivity : ComponentActivity() {
     }
 
     private fun clockOut() {
-        if (job.isActive) {
+        if (smsJob.isActive) {
             Log.d(Utils.TAG, "Job#cancel")
-            job.cancel()
+            smsJob.cancel()
         }
 
         CoroutineScope(Dispatchers.Main).launch {
-            webView.waitUntil("document.getElementById('chp-time-portlet-view-more-actions-btn')")
+            webView.locateById("chp-time-portlet-view-more-actions-btn")
 
-            semaphore.acquire()
+            wait()
             webView.runJavascript(
                 "javascript: (function() {                                                                  " +
                         "clickEvent = document.createEvent('HTMLEvents');                                   " +
@@ -191,9 +190,14 @@ class AdpActivity : ComponentActivity() {
         }
     }
 
+    private suspend fun wait() {
+        semaphore.acquire()
+    }
+
     companion object {
         val semaphore = Semaphore(1)
 
         private enum class Page { WELCOME, LOGIN, HOME, OTHER }
     }
 }
+
