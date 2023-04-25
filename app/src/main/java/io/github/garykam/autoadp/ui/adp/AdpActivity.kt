@@ -9,7 +9,7 @@ import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import io.github.garykam.autoadp.R
-import io.github.garykam.autoadp.ui.receivers.SmsBroadcastReceiver
+import io.github.garykam.autoadp.receivers.SmsBroadcastReceiver
 import io.github.garykam.autoadp.ui.screens.AdpScreen
 import io.github.garykam.autoadp.utils.*
 import kotlinx.coroutines.CoroutineScope

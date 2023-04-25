@@ -4,7 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.KeyCharacterMap
 import android.webkit.WebView
-import io.github.garykam.autoadp.ui.AdpActivity
+import io.github.garykam.autoadp.ui.adp.AdpActivity
 
 private val keyMap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
 

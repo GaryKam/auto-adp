@@ -11,7 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.github.garykam.autoadp.R
-import io.github.garykam.autoadp.ui.receivers.SmsBroadcastReceiver
+import io.github.garykam.autoadp.receivers.SmsBroadcastReceiver
 import io.github.garykam.autoadp.ui.screens.MainScreen
 import io.github.garykam.autoadp.utils.Utils
 
