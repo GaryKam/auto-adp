@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.main
+package io.github.garykam.autoadp.main
 
 import android.annotation.SuppressLint
 import android.app.TimePickerDialog

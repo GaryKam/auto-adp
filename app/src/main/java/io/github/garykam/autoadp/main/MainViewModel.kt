@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.main
+package io.github.garykam.autoadp.main
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel

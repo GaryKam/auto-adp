@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.adp
+package io.github.garykam.autoadp.adp
 
 import android.content.IntentFilter
 import android.os.Bundle
@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import io.github.garykam.autoadp.receivers.SmsBroadcastReceiver
+import io.github.garykam.autoadp.ui.theme.AppTheme
 import io.github.garykam.autoadp.utils.PreferencesUtil
 
 class AdpActivity : ComponentActivity() {
@@ -22,8 +23,9 @@ class AdpActivity : ComponentActivity() {
         setTurnScreenOn(true)
 
         setContent {
-            Log.d(TAG, "setContent")
-            AdpScreen()
+            AppTheme {
+                AdpScreen()
+            }
         }
     }
 

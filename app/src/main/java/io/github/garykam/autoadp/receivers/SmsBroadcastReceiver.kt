@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import android.util.Log
-import io.github.garykam.autoadp.ui.adp.AdpHelper
+import io.github.garykam.autoadp.adp.AdpHelper
 
 class SmsBroadcastReceiver : BroadcastReceiver() {
     private val regex = Regex("ADP:.+(?<code>\\d{6}).+")

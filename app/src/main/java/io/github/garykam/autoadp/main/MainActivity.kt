@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.main
+package io.github.garykam.autoadp.main
 
 import android.Manifest
 import android.app.AlarmManager
@@ -12,6 +12,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.github.garykam.autoadp.R
 import io.github.garykam.autoadp.receivers.SmsBroadcastReceiver
+import io.github.garykam.autoadp.ui.theme.AppTheme
 import io.github.garykam.autoadp.utils.NotificationUtil
 import io.github.garykam.autoadp.utils.PreferencesUtil
 
@@ -32,22 +33,25 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            MainScreen(
-                onSaveCredentials = {
-                    Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show()
-                },
-                onScheduleClockOut = { time ->
-                    with(getSystemService(ALARM_SERVICE) as AlarmManager) {
-                        setExact(
-                            AlarmManager.RTC_WAKEUP,
-                            time,
-                            SmsBroadcastReceiver.newIntent(this@MainActivity)
-                        )
-                    }
+            AppTheme {
+                MainScreen(
+                    onSaveCredentials = {
+                        Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show()
+                    },
+                    onScheduleClockOut = { time ->
+                        with(getSystemService(ALARM_SERVICE) as AlarmManager) {
+                            setExact(
+                                AlarmManager.RTC_WAKEUP,
+                                time,
+                                SmsBroadcastReceiver.newIntent(this@MainActivity)
+                            )
+                        }
 
-                    Toast.makeText(this, R.string.scheduled_clock_out, Toast.LENGTH_SHORT).show()
-                }
-            )
+                        Toast.makeText(this, R.string.scheduled_clock_out, Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                )
+            }
         }
     }
 

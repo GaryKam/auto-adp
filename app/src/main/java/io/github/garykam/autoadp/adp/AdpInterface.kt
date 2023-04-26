@@ -1,4 +1,4 @@
-package io.github.garykam.autoadp.ui.adp
+package io.github.garykam.autoadp.adp
 
 import android.content.Context
 import android.media.MediaPlayer

@@ -5,7 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import io.github.garykam.autoadp.ui.adp.AdpActivity
+import io.github.garykam.autoadp.adp.AdpActivity
 import io.github.garykam.autoadp.utils.NotificationUtil
 
 class AlarmBroadcastReceiver : BroadcastReceiver() {
