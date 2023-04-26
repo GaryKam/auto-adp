@@ -7,24 +7,38 @@ import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+
+var page = Page.WELCOME
+
+enum class Page { WELCOME, LOGIN, HOME, IGNORE }
+
+private const val ADP_LOGIN_URL = "https://login.adp.com/welcome"
 
 @Composable
 @SuppressLint("SetJavaScriptEnabled")
-fun AdpScreen(webView: WebView, onPageLoad: () -> Unit) {
+fun AdpScreen() {
+    val webView = WebView(LocalContext.current)
     AndroidView(factory = {
         webView.apply {
-            loadUrl("https://login.adp.com/welcome")
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
 
             CookieManager.getInstance().removeAllCookies(null)
+            addJavascriptInterface(AdpInterface(it), "Adp")
+            loadUrl(ADP_LOGIN_URL)
 
             webViewClient = object : WebViewClient() {
                 override fun onPageFinished(webView: WebView, url: String) {
                     webView.postVisualStateCallback(0L, object : WebView.VisualStateCallback() {
                         override fun onComplete(requestId: Long) {
-                            onPageLoad()
+                            when (page) {
+                                Page.WELCOME -> AdpHelper.visitLoginPage(webView)
+                                Page.LOGIN -> AdpHelper.login(webView)
+                                Page.HOME -> AdpHelper.clockOut(webView)
+                                else -> {}
+                            }
                         }
                     })
                 }

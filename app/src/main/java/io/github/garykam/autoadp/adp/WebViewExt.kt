@@ -20,7 +20,7 @@ fun WebView.locateById(id: String) {
                 Thread.sleep(250L)
                 locateById(id)
             } else {
-                AdpActivity.semaphore.release()
+                AdpHelper.semaphore.release()
             }
         }
     }
@@ -33,7 +33,7 @@ fun WebView.locateByClass(className: String) {
                 Thread.sleep(250L)
                 locateByClass(className)
             } else {
-                AdpActivity.semaphore.release()
+                AdpHelper.semaphore.release()
             }
         }
     }
@@ -44,5 +44,5 @@ fun WebView.type(text: String) {
         dispatchKeyEvent(it)
     }
 
-    AdpActivity.semaphore.release()
+    AdpHelper.semaphore.release()
 }

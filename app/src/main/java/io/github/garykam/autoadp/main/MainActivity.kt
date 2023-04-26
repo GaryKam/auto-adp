@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
                 Manifest.permission.RECEIVE_SMS
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            Log.d(PreferencesUtil.TAG, "MainActivity#requestPermission")
+            Log.d(TAG, "requestPermission")
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECEIVE_SMS), 0)
         }
 
@@ -37,15 +37,21 @@ class MainActivity : ComponentActivity() {
                     Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show()
                 },
                 onScheduleClockOut = { time ->
-                    val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-                    alarmManager.setExact(
-                        AlarmManager.RTC_WAKEUP,
-                        time,
-                        SmsBroadcastReceiver.newIntent(this)
-                    )
+                    with(getSystemService(ALARM_SERVICE) as AlarmManager) {
+                        setExact(
+                            AlarmManager.RTC_WAKEUP,
+                            time,
+                            SmsBroadcastReceiver.newIntent(this@MainActivity)
+                        )
+                    }
 
                     Toast.makeText(this, R.string.scheduled_clock_out, Toast.LENGTH_SHORT).show()
-                })
+                }
+            )
         }
+    }
+
+    companion object {
+        private const val TAG = "MainActivity"
     }
 }

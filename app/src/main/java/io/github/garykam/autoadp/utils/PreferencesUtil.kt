@@ -6,7 +6,6 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 
 object PreferencesUtil {
-    const val TAG = "AutoADP"
     private val masterKey = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var encryptedSharedPreferences: SharedPreferences
