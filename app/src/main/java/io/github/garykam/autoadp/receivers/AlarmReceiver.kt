@@ -8,7 +8,7 @@ import android.util.Log
 import io.github.garykam.autoadp.adp.AdpActivity
 import io.github.garykam.autoadp.utils.NotificationUtil
 
-class AlarmBroadcastReceiver : BroadcastReceiver() {
+class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "onReceive")
 
@@ -24,5 +24,14 @@ class AlarmBroadcastReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "AlarmBroadcastReceiver"
+
+        fun newIntent(context: Context): PendingIntent {
+            return PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(context, AlarmReceiver::class.java),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+        }
     }
 }

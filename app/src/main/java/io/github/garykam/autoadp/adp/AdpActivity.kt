@@ -6,12 +6,12 @@ import android.provider.Telephony
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import io.github.garykam.autoadp.receivers.SmsBroadcastReceiver
+import io.github.garykam.autoadp.receivers.SmsReceiver
 import io.github.garykam.autoadp.ui.theme.AppTheme
 import io.github.garykam.autoadp.utils.PreferencesUtil
 
 class AdpActivity : ComponentActivity() {
-    private val smsBroadcastReceiver = SmsBroadcastReceiver()
+    private val smsReceiver = SmsReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,13 +32,13 @@ class AdpActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
 
-        registerReceiver(smsBroadcastReceiver, IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION))
+        registerReceiver(smsReceiver, IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION))
     }
 
     override fun onPause() {
         super.onPause()
 
-        unregisterReceiver(smsBroadcastReceiver)
+        unregisterReceiver(smsReceiver)
     }
 
     companion object {

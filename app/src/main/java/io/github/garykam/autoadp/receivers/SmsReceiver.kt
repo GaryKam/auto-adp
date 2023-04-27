@@ -1,7 +1,6 @@
 package io.github.garykam.autoadp.receivers
 
 import android.app.Activity
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -9,7 +8,7 @@ import android.provider.Telephony
 import android.util.Log
 import io.github.garykam.autoadp.adp.AdpHelper
 
-class SmsBroadcastReceiver : BroadcastReceiver() {
+class SmsReceiver : BroadcastReceiver() {
     private val regex = Regex("ADP:.+(?<code>\\d{6}).+")
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -31,14 +30,5 @@ class SmsBroadcastReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "SmsBroadcastReceiver"
-
-        fun newIntent(context: Context): PendingIntent {
-            return PendingIntent.getBroadcast(
-                context,
-                0,
-                Intent(context, AlarmBroadcastReceiver::class.java),
-                PendingIntent.FLAG_IMMUTABLE
-            )
-        }
     }
 }

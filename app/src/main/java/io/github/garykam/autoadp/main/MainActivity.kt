@@ -2,8 +2,12 @@ package io.github.garykam.autoadp.main
 
 import android.Manifest
 import android.app.AlarmManager
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -11,7 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.github.garykam.autoadp.R
-import io.github.garykam.autoadp.receivers.SmsBroadcastReceiver
+import io.github.garykam.autoadp.receivers.AlarmReceiver
 import io.github.garykam.autoadp.ui.theme.AppTheme
 import io.github.garykam.autoadp.utils.NotificationUtil
 import io.github.garykam.autoadp.utils.PreferencesUtil
@@ -32,6 +36,21 @@ class MainActivity : ComponentActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECEIVE_SMS), 0)
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            with(getSystemService(ALARM_SERVICE) as AlarmManager) {
+                if (!this.canScheduleExactAlarms()) {
+                    Log.d(TAG, "requestScheduleExactAlarms")
+                    Intent(
+                        Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse(
+                            "package:$packageName"
+                        )
+                    ).also {
+                        startActivity(it)
+                    }
+                }
+            }
+        }
+
         setContent {
             AppTheme {
                 MainScreen(
@@ -43,7 +62,7 @@ class MainActivity : ComponentActivity() {
                             setExact(
                                 AlarmManager.RTC_WAKEUP,
                                 time,
-                                SmsBroadcastReceiver.newIntent(this@MainActivity)
+                                AlarmReceiver.newIntent(this@MainActivity)
                             )
                         }
 

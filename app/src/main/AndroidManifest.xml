@@ -16,7 +16,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AutoADP">
 
-        <receiver android:name="io.github.garykam.autoadp.receivers.AlarmBroadcastReceiver" />
+        <receiver android:name=".receivers.AlarmReceiver" />
 
         <activity
             android:name=".main.MainActivity"
