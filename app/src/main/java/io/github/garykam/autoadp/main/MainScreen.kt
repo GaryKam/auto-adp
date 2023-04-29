@@ -21,42 +21,13 @@ import io.github.garykam.autoadp.R
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun MainScreen(
+    viewModel: MainViewModel = viewModel(),
     onSaveCredentials: () -> Unit,
     onScheduleClockOut: (Long) -> Unit,
     onCancelClockOut: () -> Unit,
-    viewModel: MainViewModel = viewModel()
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(text = stringResource(id = R.string.app_name)) },
-                actions = {
-                    var showMenu by remember { mutableStateOf(false) }
-
-                    IconButton(onClick = { showMenu = !showMenu }) {
-                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "menu")
-                    }
-
-                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(onClick = {
-                            viewModel.setCredentials()
-                            onSaveCredentials()
-                            showMenu = false
-                        }) {
-                            Text(text = stringResource(id = R.string.save_credentials))
-                        }
-
-                        DropdownMenuItem(onClick = {
-                            if (viewModel.isClockOutScheduled()) {
-                                viewModel.setClockOutScheduled(false)
-                                onCancelClockOut()
-                            }
-                            showMenu = false
-                        }) {
-                            Text(text = stringResource(id = R.string.cancel_clock_out))
-                        }
-                    }
-                })
-        },
+        topBar = { TopBar(viewModel, onSaveCredentials, onCancelClockOut) },
         content = {
             Column(
                 modifier = Modifier
@@ -64,42 +35,91 @@ fun MainScreen(
                     .padding(vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                OutlinedTextField(value = viewModel.getUsername(),
-                    onValueChange = { viewModel.setUsername(it) },
-                    modifier = Modifier.padding(vertical = 5.dp),
-                    label = { Text(text = stringResource(id = R.string.username)) })
+                InputFields(viewModel)
+                TimeButton(viewModel)
+                ScheduleButton(viewModel, onScheduleClockOut)
+            }
+        }
+    )
+}
 
-                OutlinedTextField(
-                    value = viewModel.getPassword(),
-                    onValueChange = { viewModel.setPassword(it) },
-                    modifier = Modifier.padding(vertical = 5.dp),
-                    label = { Text(text = stringResource(id = R.string.password)) },
-                    visualTransformation = PasswordVisualTransformation()
-                )
+@Composable
+private fun TopBar(
+    viewModel: MainViewModel,
+    onSaveCredentials: () -> Unit,
+    onCancelClockOut: () -> Unit,
+) {
+    TopAppBar(title = { Text(text = stringResource(id = R.string.app_name)) },
+        actions = {
+            var showMenu by remember { mutableStateOf(false) }
 
-                val timePickerDialog = TimePickerDialog(
-                    LocalContext.current, { _, hourOfDay, minute ->
-                        viewModel.setTime("$hourOfDay:$minute")
-                    }, viewModel.getHour(), viewModel.getMinute(), false
-                )
+            IconButton(onClick = { showMenu = !showMenu }) {
+                Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "menu")
+            }
 
-                OutlinedButton(modifier = Modifier.padding(40.dp), onClick = {
-                    timePickerDialog.show()
+            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                DropdownMenuItem(onClick = {
+                    viewModel.setCredentials()
+                    onSaveCredentials()
+                    showMenu = false
                 }) {
-                    Text(text = viewModel.getDisplayTime())
+                    Text(text = stringResource(id = R.string.save_credentials))
                 }
 
-                Button(
-                    onClick = {
-                        viewModel.setClockOutScheduled(true)
-                        onScheduleClockOut(viewModel.getTime())
-                    },
-                    enabled = !viewModel.isClockOutScheduled()
-                ) {
-                    Text(text = stringResource(id = R.string.schedule_clock_out))
+                DropdownMenuItem(onClick = {
+                    if (viewModel.isClockOutScheduled()) {
+                        viewModel.setClockOutScheduled(false)
+                        onCancelClockOut()
+                    }
+                    showMenu = false
+                }) {
+                    Text(text = stringResource(id = R.string.cancel_clock_out))
                 }
             }
         }
     )
 }
 
+@Composable
+private fun InputFields(viewModel: MainViewModel) {
+    OutlinedTextField(value = viewModel.getUsername(),
+        onValueChange = { viewModel.setUsername(it) },
+        modifier = Modifier.padding(vertical = 5.dp),
+        label = { Text(text = stringResource(id = R.string.username)) })
+
+    OutlinedTextField(
+        value = viewModel.getPassword(),
+        onValueChange = { viewModel.setPassword(it) },
+        modifier = Modifier.padding(vertical = 5.dp),
+        label = { Text(text = stringResource(id = R.string.password)) },
+        visualTransformation = PasswordVisualTransformation()
+    )
+}
+
+@Composable
+private fun TimeButton(viewModel: MainViewModel) {
+    val timePickerDialog = TimePickerDialog(
+        LocalContext.current, { _, hourOfDay, minute ->
+            viewModel.setTime("$hourOfDay:$minute")
+        }, viewModel.getHour(), viewModel.getMinute(), false
+    )
+
+    OutlinedButton(modifier = Modifier.padding(40.dp), onClick = {
+        timePickerDialog.show()
+    }) {
+        Text(text = viewModel.getDisplayTime())
+    }
+}
+
+@Composable
+private fun ScheduleButton(viewModel: MainViewModel, onScheduleClockOut: (Long) -> Unit) {
+    Button(
+        onClick = {
+            viewModel.setClockOutScheduled(true)
+            onScheduleClockOut(viewModel.getTime())
+        },
+        enabled = !viewModel.isClockOutScheduled()
+    ) {
+        Text(text = stringResource(id = R.string.schedule_clock_out))
+    }
+}

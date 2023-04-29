@@ -4,7 +4,7 @@
     <string name="password">Password</string>
     <string name="save_credentials">Save Credentials</string>
     <string name="saved_credentials">Saved credentials</string>
-    <string name="auto_clock">Auto Clocker</string>
+    <string name="auto_clock">Auto Clocking</string>
     <string name="auto_clock_out">Click to automatically clock out</string>
     <string name="schedule_clock_out">Schedule Clock Out</string>
     <string name="scheduled_clock_out">Scheduled to automatically clock out</string>
