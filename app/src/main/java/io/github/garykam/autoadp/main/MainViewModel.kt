@@ -10,6 +10,7 @@ class MainViewModel : ViewModel() {
     private var username = mutableStateOf(PreferencesUtil.getUsername())
     private var password = mutableStateOf(PreferencesUtil.getPassword())
     private var time = mutableStateOf(PreferencesUtil.getTime())
+    private var clockOutScheduled = mutableStateOf(PreferencesUtil.isClockOutScheduled())
 
     fun getUsername() = username.value
 
@@ -31,6 +32,8 @@ class MainViewModel : ViewModel() {
         return SimpleDateFormat("h:mm a", Locale.US).format(Date(getTime()))
     }
 
+    fun isClockOutScheduled() = clockOutScheduled.value
+
     fun setUsername(_username: String) {
         username.value = _username
     }
@@ -39,12 +42,17 @@ class MainViewModel : ViewModel() {
         password.value = _password
     }
 
-    fun saveCredentials() {
+    fun setCredentials() {
         PreferencesUtil.saveCredentials(username.value, password.value)
     }
 
-    fun saveTime(_time: String) {
+    fun setTime(_time: String) {
         time.value = _time
         PreferencesUtil.saveTime(_time)
+    }
+
+    fun setClockOutScheduled(_clockOutScheduled: Boolean) {
+        clockOutScheduled.value = _clockOutScheduled
+        PreferencesUtil.saveClockOutScheduled(_clockOutScheduled)
     }
 }

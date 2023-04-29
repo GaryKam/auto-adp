@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import io.github.garykam.autoadp.R
 import io.github.garykam.autoadp.receivers.AlarmReceiver
 import io.github.garykam.autoadp.ui.theme.AppTheme
+import io.github.garykam.autoadp.utils.AlarmUtil
 import io.github.garykam.autoadp.utils.NotificationUtil
 import io.github.garykam.autoadp.utils.PreferencesUtil
 
@@ -55,18 +56,18 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 MainScreen(
                     onSaveCredentials = {
-                        Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, R.string.saved_credentials, Toast.LENGTH_SHORT).show()
                     },
                     onScheduleClockOut = { time ->
-                        with(getSystemService(ALARM_SERVICE) as AlarmManager) {
-                            setExact(
-                                AlarmManager.RTC_WAKEUP,
-                                time,
-                                AlarmReceiver.newIntent(this@MainActivity)
-                            )
-                        }
+                        AlarmUtil.scheduleAlarm(this, AlarmReceiver.newIntent(this), time)
 
                         Toast.makeText(this, R.string.scheduled_clock_out, Toast.LENGTH_SHORT)
+                            .show()
+                    },
+                    onCancelClockOut = {
+                        AlarmUtil.cancelAlarm(this, AlarmReceiver.newIntent(this))
+
+                        Toast.makeText(this, R.string.cancelled_clock_out, Toast.LENGTH_SHORT)
                             .show()
                     }
                 )

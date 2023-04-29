@@ -9,7 +9,7 @@ import io.github.garykam.autoadp.R
 import java.util.*
 
 object NotificationUtil {
-    private var notificationId = -1
+    private var notificationId = 1337
     private const val AUTO_ADP_CHANNEL_ID = "auto_adp_channel"
 
     fun initNotificationChannel(context: Context) {

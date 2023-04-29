@@ -7,6 +7,7 @@ import android.content.Intent
 import android.util.Log
 import io.github.garykam.autoadp.adp.AdpActivity
 import io.github.garykam.autoadp.utils.NotificationUtil
+import io.github.garykam.autoadp.utils.PreferencesUtil
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -19,6 +20,11 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_IMMUTABLE
         ).run {
             NotificationUtil.createNotification(context, this)
+        }
+
+        with(PreferencesUtil) {
+            initSharedPreferences(context)
+            saveClockOutScheduled(false)
         }
     }
 

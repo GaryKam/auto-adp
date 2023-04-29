@@ -28,6 +28,8 @@ object PreferencesUtil {
 
     fun getTime() = sharedPreferences.getString("time", "17:00")!!
 
+    fun isClockOutScheduled() = sharedPreferences.getBoolean("clockOutScheduled", false)
+
     fun saveCredentials(username: String, password: String) {
         with(encryptedSharedPreferences.edit()) {
             putString("username", username)
@@ -39,6 +41,13 @@ object PreferencesUtil {
     fun saveTime(time: String) {
         with(sharedPreferences.edit()) {
             putString("time", time)
+            apply()
+        }
+    }
+
+    fun saveClockOutScheduled(clockOutScheduled: Boolean) {
+        with(sharedPreferences.edit()) {
+            putBoolean("clockOutScheduled", clockOutScheduled)
             apply()
         }
     }

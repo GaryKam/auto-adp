@@ -23,6 +23,7 @@ import io.github.garykam.autoadp.R
 fun MainScreen(
     onSaveCredentials: () -> Unit,
     onScheduleClockOut: (Long) -> Unit,
+    onCancelClockOut: () -> Unit,
     viewModel: MainViewModel = viewModel()
 ) {
     Scaffold(
@@ -37,11 +38,21 @@ fun MainScreen(
 
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(onClick = {
-                            viewModel.saveCredentials()
+                            viewModel.setCredentials()
                             onSaveCredentials()
                             showMenu = false
                         }) {
-                            Text(text = stringResource(id = R.string.save))
+                            Text(text = stringResource(id = R.string.save_credentials))
+                        }
+
+                        DropdownMenuItem(onClick = {
+                            if (viewModel.isClockOutScheduled()) {
+                                viewModel.setClockOutScheduled(false)
+                                onCancelClockOut()
+                            }
+                            showMenu = false
+                        }) {
+                            Text(text = stringResource(id = R.string.cancel_clock_out))
                         }
                     }
                 })
@@ -68,7 +79,7 @@ fun MainScreen(
 
                 val timePickerDialog = TimePickerDialog(
                     LocalContext.current, { _, hourOfDay, minute ->
-                        viewModel.saveTime("$hourOfDay:$minute")
+                        viewModel.setTime("$hourOfDay:$minute")
                     }, viewModel.getHour(), viewModel.getMinute(), false
                 )
 
@@ -78,9 +89,13 @@ fun MainScreen(
                     Text(text = viewModel.getDisplayTime())
                 }
 
-                Button(onClick = {
-                    onScheduleClockOut(viewModel.getTime())
-                }) {
+                Button(
+                    onClick = {
+                        viewModel.setClockOutScheduled(true)
+                        onScheduleClockOut(viewModel.getTime())
+                    },
+                    enabled = !viewModel.isClockOutScheduled()
+                ) {
                     Text(text = stringResource(id = R.string.schedule_clock_out))
                 }
             }
